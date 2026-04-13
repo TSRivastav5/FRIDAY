@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-glass bg-white dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-50 border border-white dark:border-gray-700 border-opacity-30 shadow-glass;
+  }
+
+  .premium-card {
+    @apply bg-white dark:bg-gray-800 rounded-3xl shadow-premium p-6 transition-transform hover:scale-105;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-2xl font-semibold hover:shadow-lg transition-all active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-2xl font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-all;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border-2 border-transparent rounded-xl focus:border-indigo-500 focus:outline-none transition-colors;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* Mobile-first optimizations */
+@media (max-width: 640px) {
+  html {
+    font-size: 16px;
+  }
+}
