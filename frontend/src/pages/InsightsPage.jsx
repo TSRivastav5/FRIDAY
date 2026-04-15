@@ -8,9 +8,9 @@ import { fridayInsights } from '../data/mockData';
 
 export const InsightsPage = () => {
   const store = useFinanceStore();
-  const monthlyExpenses = store.getMonthlyExpenses(store);
-  const totalMonthly = store.getTotalMonthlyExpense(store);
-  const investStats = store.getInvestmentStats(store);
+  const monthlyExpenses = store.expenses || [];
+  const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const investStats = store.portfolioStats || { totalValue: 0, gainPercent: 0, gain: 0 };
 
   // Generate mock trend data
   const trendData = [
@@ -20,7 +20,10 @@ export const InsightsPage = () => {
     { date: 'Week 4', spending: 1400, budget: 2000 },
   ];
 
-  const expensesByCategory = store.getExpensesByCategory(store);
+  const expensesByCategory = monthlyExpenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + e.amount;
+    return acc;
+  }, {});
   const categoryEntries = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]);
 
   return (

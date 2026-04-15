@@ -8,16 +8,21 @@ import { formatCurrency } from '../utils/helpers';
 
 export const HomePage = () => {
   const store = useFinanceStore();
-  const monthlyExpense = store.getTotalMonthlyExpense(store);
-  const investStats = store.getInvestmentStats(store);
+  const userName = store.user?.name || "Boss";
+  const totalBalance = store.salary?.amount || 0;
+  const monthlySalary = store.salary?.amount || 0;
+  const monthlyExpense = store.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
+  const investStats = store.portfolioStats || { totalValue: 0, gainPercent: 0 };
+  const currentAllocation = store.currentAllocation || { emi: 0, rent: 0, savings: 0 };
+  const showSalaryModal = store.showSalaryModal || false;
 
   return (
     <div className="pb-32 pt-2">
       {/* Balance Card */}
       <BalanceCard
-        userName={store.userName}
-        balance={store.totalBalance}
-        monthlySalary={store.monthlySalary}
+        userName={userName}
+        balance={totalBalance}
+        monthlySalary={monthlySalary}
       />
 
       {/* Quick Actions */}
@@ -54,14 +59,14 @@ export const HomePage = () => {
           <DashboardCard
             icon="💳"
             title="Bills & EMI"
-            value={formatCurrency(store.currentAllocation.emi + store.currentAllocation.rent)}
+            value={formatCurrency(currentAllocation.emi + currentAllocation.rent)}
             subtitle="Monthly"
             color="orange"
           />
           <DashboardCard
             icon="🏦"
             title="Savings"
-            value={formatCurrency(store.currentAllocation.savings)}
+            value={formatCurrency(currentAllocation.savings)}
             subtitle="Reserved"
             color="purple"
           />
@@ -96,10 +101,10 @@ export const HomePage = () => {
 
       {/* Salary Modal */}
       <SalaryModal
-        isOpen={store.showSalaryModal}
-        onClose={() => store.setSalaryModal(false)}
+        isOpen={showSalaryModal}
+        onClose={() => store.setSalaryModal?.(false)}
         onSubmit={store.updateAllocation}
-        currentAllocation={store.currentAllocation}
+        currentAllocation={currentAllocation}
       />
     </div>
   );

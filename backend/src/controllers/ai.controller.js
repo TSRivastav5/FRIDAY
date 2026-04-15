@@ -41,7 +41,7 @@ export const chatWithFriday = async (req, res) => {
             { 
               role: "assistant", 
               content: response.message,
-              actions: response.actions,
+              actions: response.actions || [],
             },
           ],
         },
@@ -52,7 +52,7 @@ export const chatWithFriday = async (req, res) => {
     res.json({
       success: true,
       response: response.message,
-      actions: response.actions,
+      actions: response.actions || [],
       timestamp: response.timestamp,
     });
   } catch (error) {
@@ -90,9 +90,9 @@ export const handleSalaryCredited = async (req, res) => {
       creditDate: new Date(),
       aiAnalysis: {
         summary: analysis.message,
-        recommendations: analysis.actions
-          .filter(a => a.tool === "investment_advisor")
-          .map(a => JSON.parse(a.result)),
+        recommendations: analysis.actions 
+          ? analysis.actions.filter(a => a.tool === "investment_advisor").map(a => { try { return JSON.parse(a.result); } catch (e) { return a.result; } })
+          : [],
       },
     });
 
@@ -106,7 +106,7 @@ export const handleSalaryCredited = async (req, res) => {
       success: true,
       salary: salary,
       fridayResponse: analysis.message,
-      actions: analysis.actions,
+      actions: analysis.actions || [],
       greeting: `Welcome back, Boss! 💰 ₹${amount.toLocaleString('en-IN')} has been noted.`,
     });
   } catch (error) {
@@ -129,7 +129,7 @@ export const getInvestmentAdvice = async (req, res) => {
     res.json({
       success: true,
       advice: advice.message,
-      actions: advice.actions,
+      actions: advice.actions || [],
     });
   } catch (error) {
     console.error("Investment advice error:", error);
@@ -154,7 +154,7 @@ export const getSpendingAnalysis = async (req, res) => {
     res.json({
       success: true,
       analysis: analysis.message,
-      actions: analysis.actions,
+      actions: analysis.actions || [],
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to analyze spending", message: error.message });
@@ -179,7 +179,7 @@ export const getPortfolioReview = async (req, res) => {
     res.json({
       success: true,
       review: review.message,
-      actions: review.actions,
+      actions: review.actions || [],
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to review portfolio", message: error.message });

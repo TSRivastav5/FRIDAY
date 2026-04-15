@@ -8,9 +8,12 @@ import { StatCard, EmptyState } from '../components/UIUtils';
 
 export const ExpensesPage = () => {
   const store = useFinanceStore();
-  const monthlyExpenses = store.getMonthlyExpenses(store);
-  const expensesByCategory = store.getExpensesByCategory(store);
-  const totalMonthly = store.getTotalMonthlyExpense(store);
+  const monthlyExpenses = store.expenses || [];
+  const expensesByCategory = monthlyExpenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + e.amount;
+    return acc;
+  }, {});
+  const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const chartData = Object.entries(expensesByCategory).map(([category, amount]) => ({
     name: category,

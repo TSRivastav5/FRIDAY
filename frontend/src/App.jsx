@@ -8,6 +8,7 @@ import { InsightsPage } from './pages/InsightsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BottomNav } from './components/BottomNav';
 import { ChatWidget } from './components/ChatWidget';
+import { LoginPage } from './pages/LoginPage';
 import './index.css';
 
 function App() {
@@ -37,13 +38,24 @@ function App() {
     }
   };
 
+  if (!store.isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+        <div className="fixed inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pointer-events-none" />
+        <div className="relative max-w-2xl mx-auto">
+          <LoginPage />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
       {/* Background Gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pointer-events-none" />
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto">
+      <div className="relative max-w-2xl mx-auto pb-24">
         {/* Main Page */}
         <motion.div
           key={store.activeTab}
@@ -77,7 +89,7 @@ function App() {
           isOpen={store.showChatWidget}
           onClose={() => store.setChatWidget(false)}
           messages={store.chatMessages}
-          onSendMessage={store.addChatMessage}
+          onSendMessage={store.chatWithFriday}
         />
 
         {/* Bottom Navigation */}

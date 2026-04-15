@@ -11,13 +11,15 @@ export const useFinanceStore = create(
     (set, get) => ({
       // ──────── Auth State ────────
       user: fridayAPI.getUser(),
-      isAuthenticated: fridayAPI.isAuthenticated(),
+      isAuthenticated: fridayAPI.isLoggedIn(),
       
       // ──────── UI State ────────
       activeTab: "home",
       isDarkMode: window.matchMedia("(prefers-color-scheme: dark)").matches,
       isLoading: false,
       error: null,
+      showSalaryModal: false,
+      setSalaryModal: (isOpen) => set({ showSalaryModal: isOpen }),
 
       // ──────── Financial Data ────────
       salary: null,
@@ -36,11 +38,10 @@ export const useFinanceStore = create(
       
       // ──────── Actions ────────
       
-      // Auth
-      login: async (email) => {
+      login: async (email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const data = await fridayAPI.login(email);
+          const data = await fridayAPI.login(email, password);
           set({ user: data.user, isAuthenticated: true, isLoading: false });
           return data;
         } catch (error) {
@@ -49,11 +50,30 @@ export const useFinanceStore = create(
         }
       },
 
-      register: async (name, email) => {
+      register: async (name, email, password) => {
         set({ isLoading: true, error: null });
         try {
-          const data = await fridayAPI.register(name, email);
+          const data = await fridayAPI.register(name, email, password);
           set({ user: data.user, isAuthenticated: true, isLoading: false });
+          return data;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      updateAllocation: async (allocation) => {
+        set({ isLoading: true, error: null });
+        try {
+          const state = get();
+          const id = state.salary?._id;
+          if (!id) {
+            // Handled locally if there's no backend salary record yet
+            set({ currentAllocation: allocation, isLoading: false });
+            return;
+          }
+          const data = await fridayAPI.updateAllocation(id, allocation);
+          set({ currentAllocation: allocation, isLoading: false });
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });

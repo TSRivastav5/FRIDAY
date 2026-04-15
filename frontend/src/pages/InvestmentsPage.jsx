@@ -18,7 +18,7 @@ export const InvestmentsPage = () => {
     currentValue: '',
   });
 
-  const stats = store.getInvestmentStats(store);
+  const stats = store.portfolioStats || { totalInvested: 0, totalValue: 0, gainPercent: 0, gain: 0 };
 
   const chartData = store.investments.map((inv) => ({
     name: inv.name.slice(0, 5),

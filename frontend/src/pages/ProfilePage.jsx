@@ -6,15 +6,26 @@ import { formatCurrency } from '../utils/helpers';
 export const ProfilePage = () => {
   const store = useFinanceStore();
 
-  const stats = store.getInvestmentStats(store);
-  const monthlyExpenses = store.getMonthlyExpenses(store);
-  const totalMonthly = store.getTotalMonthlyExpense(store);
+  const stats = store.portfolioStats || { totalInvested: 0, totalValue: 0, gainPercent: 0, gain: 0 };
+  const monthlyExpenses = store.expenses || [];
+  const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const userName = store.user?.name || "Boss";
+  const totalBalance = store.salary?.amount || 0;
+  const monthlySalary = store.salary?.amount || 0;
 
   return (
     <div className="pb-32 pt-4 px-4">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         {/* Header */}
-        <h1 className="text-3xl font-bold mb-6">👤 Profile</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">👤 Profile</h1>
+          <button 
+            onClick={() => store.logout()} 
+            className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-semibold shadow-premium hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
+          >
+            Log Out
+          </button>
+        </div>
 
         {/* User Card */}
         <motion.div
@@ -23,7 +34,7 @@ export const ProfilePage = () => {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="text-5xl mb-4">👋</div>
-          <h2 className="text-3xl font-bold">{store.userName}</h2>
+          <h2 className="text-3xl font-bold">{userName}</h2>
           <p className="opacity-75 mt-2">Financial Freedom Seeker</p>
         </motion.div>
 
@@ -31,8 +42,8 @@ export const ProfilePage = () => {
         <h3 className="font-bold text-lg mb-4">💰 Your Financial Stats</h3>
         <div className="grid grid-cols-2 gap-4 mb-8">
           {[
-            { label: 'Total Balance', value: formatCurrency(store.totalBalance), icon: '💳' },
-            { label: 'Monthly Salary', value: formatCurrency(store.monthlySalary), icon: '💵' },
+            { label: 'Total Balance', value: formatCurrency(totalBalance), icon: '💳' },
+            { label: 'Monthly Salary', value: formatCurrency(monthlySalary), icon: '💵' },
             { label: 'Total Invested', value: formatCurrency(stats.totalInvested), icon: '📈' },
             { label: 'Investment Gain', value: formatCurrency(stats.gain), icon: '📊' },
             { label: 'Monthly Expenses', value: formatCurrency(totalMonthly), icon: '💸' },
@@ -89,6 +100,24 @@ export const ProfilePage = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Family Section */}
+        <h3 className="font-bold text-lg mb-4 mt-8">👨‍👩‍👧‍👦 Family Protocol</h3>
+        <motion.div
+           className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-premium"
+           initial={{ opacity: 0, scale: 0.95 }}
+           animate={{ opacity: 1, scale: 1 }}
+        >
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+            You have Administrative privileges. You can initialize access for other family members.
+          </p>
+          <button 
+            onClick={() => alert("Family Member Module will be unlocked soon!")}
+            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-[1.02]"
+          >
+            + Initiate Family Access
+          </button>
+        </motion.div>
 
         {/* About Section */}
         <motion.div
