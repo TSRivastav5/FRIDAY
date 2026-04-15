@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  # 🗄️ MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: friday-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - friday_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: friday_finance
+
+  # 🤖 FRIDAY Backend API
+  backend:
+    build: ./backend
+    container_name: friday-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/friday_finance
+      - PORT=5000
+      - NODE_ENV=development
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/src:/app/src
+
+  # 🎨 FRIDAY Frontend
+  frontend:
+    build: ./frontend
+    container_name: friday-frontend
+    ports:
+      - "5174:5174"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+
+  # 📡 MCP Server (Optional)
+  mcp-server:
+    build: ./mcp-server
+    container_name: friday-mcp
+    ports:
+      - "8000:8000"
+
+volumes:
+  friday_data:

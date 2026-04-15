@@ -1,0 +1,165 @@
+// ============================================================
+// 🌐 FRIDAY API Client (Connects Frontend ↔ Backend)
+// ============================================================
+
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+class FridayAPI {
+  constructor() {
+    this.token = localStorage.getItem("friday_token");
+  }
+
+  async _fetch(endpoint, options = {}) {
+    const headers = {
+      "Content-Type": "application/json",
+      ...(this.token && { Authorization: `Bearer ${this.token}` }),
+    };
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        this.logout();
+      }
+      throw new Error(data.error || "Something went wrong");
+    }
+
+    return data;
+  }
+
+  get(url) {
+    return this._fetch(url);
+  }
+  post(url, body) {
+    return this._fetch(url, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+  put(url, body) {
+    return this._fetch(url, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
+  del(url) {
+    return this._fetch(url, { method: "DELETE" });
+  }
+
+  // Auth
+  async login(email, password) {
+    const data = await this.post("/auth/login", { email, password });
+    this.token = data.token;
+    localStorage.setItem("friday_token", data.token);
+    localStorage.setItem("friday_user", JSON.stringify(data.user));
+    return data;
+  }
+
+  async register(name, email, password) {
+    const data = await this.post("/auth/register", {
+      name,
+      email,
+      password,
+    });
+    this.token = data.token;
+    localStorage.setItem("friday_token", data.token);
+    localStorage.setItem("friday_user", JSON.stringify(data.user));
+    return data;
+  }
+
+  logout() {
+    this.token = null;
+    localStorage.removeItem("friday_token");
+    localStorage.removeItem("friday_user");
+  }
+
+  isLoggedIn() {
+    return !!this.token;
+  }
+
+  getUser() {
+    try {
+      return JSON.parse(localStorage.getItem("friday_user"));
+    } catch {
+      return null;
+    }
+  }
+
+  // Salary
+  creditSalary(amount) {
+    return this.post("/ai/salary-credited", { amount });
+  }
+  getSalaryHistory() {
+    return this.get("/salary");
+  }
+  updateAllocation(id, allocation) {
+    return this.put(`/salary/${id}/allocation`, { allocation });
+  }
+
+  // Expenses
+  getExpenses(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    return this.get(`/expenses?${q}`);
+  }
+  addExpense(expense) {
+    return this.post("/expenses", expense);
+  }
+  deleteExpense(id) {
+    return this.del(`/expenses/${id}`);
+  }
+  getExpenseSummary(month) {
+    return this.get(`/expenses/summary?month=${month}`);
+  }
+
+  // Investments
+  getInvestments() {
+    return this.get("/investments");
+  }
+  addInvestment(inv) {
+    return this.post("/investments", inv);
+  }
+  updateInvestment(id, data) {
+    return this.put(`/investments/${id}`, data);
+  }
+
+  // AI
+  chatWithFriday(message) {
+    return this.post("/ai/chat", { message });
+  }
+  getInvestmentAdvice(budget) {
+    return this.post("/ai/investment-advice", { budget });
+  }
+  getSpendingAnalysis() {
+    return this.get("/ai/spending-analysis");
+  }
+  getPortfolioReview() {
+    return this.get("/ai/portfolio-review");
+  }
+  getChatHistory() {
+    return this.get("/ai/chat-history");
+  }
+
+  // Family
+  addFamilyMember(data) {
+    return this.post("/auth/family/add", data);
+  }
+  getFamilyMembers() {
+    return this.get("/auth/family");
+  }
+
+  // Profile
+  updateProfile(profile) {
+    return this.put("/auth/profile", {
+      financialProfile: profile,
+    });
+  }
+}
+
+export const api = new FridayAPI();
+export default api;

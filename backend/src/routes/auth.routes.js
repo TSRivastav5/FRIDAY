@@ -1,0 +1,157 @@
+import { Router } from "express";
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import { auth } from "../middleware/auth.js";
+
+const router = Router();
+
+// Register
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ error: "Name, email, and password required" });
+    }
+
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
+    }
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    const user = await User.create({ name, email, password });
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "90d" } // Long token for convenience
+    );
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: user.toJSON(),
+      greeting: `Welcome to FRIDAY, ${name}! 🤖 I'm your personal financial advisor. Let's manage your money like a boss!`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Login
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Wrong password" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "90d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: user.toJSON(),
+      greeting: `Welcome back, Boss! 🤖 FRIDAY is ready to help.`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get profile
+router.get("/me", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update financial profile
+router.put("/profile", auth, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { financialProfile: req.body.financialProfile },
+      { new: true }
+    );
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add family member
+router.post("/family/add", auth, async (req, res) => {
+  try {
+    const { name, email, password, familyRole } = req.body;
+    const currentUser = await User.findById(req.user.id);
+
+    // Create family group ID if doesn't exist
+    const familyGroupId =
+      currentUser.familyGroupId || `family_${currentUser._id}`;
+
+    // Update current user's family group
+    if (!currentUser.familyGroupId) {
+      currentUser.familyGroupId = familyGroupId;
+      await currentUser.save();
+    }
+
+    // Create family member account
+    const member = await User.create({
+      name,
+      email,
+      password,
+      familyRole,
+      familyGroupId,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: `${name} added to your FRIDAY family! 👨‍👩‍👧‍👦`,
+      member: member.toJSON(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get family members
+router.get("/family", auth, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser.familyGroupId) {
+      return res.json({ success: true, family: [currentUser] });
+    }
+
+    const family = await User.find({
+      familyGroupId: currentUser.familyGroupId,
+    }).select("-password");
+
+    res.json({ success: true, family });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;
