@@ -36,7 +36,7 @@ async function createAdmin() {
         
         console.log(`\n🔄 Initializing connection to database...`);
         try {
-          await mongoose.connect(dbUri);
+          await mongoose.connect(dbUri, { dbName: "friday_finance" });
           console.log(`✅ Database connected successfully!`);
           
           const existing = await User.findOne({ email: email.toLowerCase() });
