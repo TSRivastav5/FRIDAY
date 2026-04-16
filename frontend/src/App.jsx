@@ -7,6 +7,7 @@ import { InvestmentsPage } from './pages/InvestmentsPage';
 import { InsightsPage } from './pages/InsightsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BottomNav } from './components/BottomNav';
+import { Header } from './components/Header';
 import { ChatWidget } from './components/ChatWidget';
 import { LoginPage } from './pages/LoginPage';
 import './index.css';
@@ -40,9 +41,13 @@ function App() {
 
   if (!store.isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-        <div className="fixed inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pointer-events-none" />
-        <div className="relative max-w-2xl mx-auto">
+      <div className="bg-surface-container-lowest text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden">
+        <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,_#11192e_0%,_#000000_100%)]">
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-primary/5 rounded-full animate-orbit"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-secondary/5 rounded-full animate-orbit" style={{animationDirection: "reverse", animationDuration: "45s"}}></div>
+        </div>
+        <div className="relative max-w-2xl mx-auto z-10 pt-20">
           <LoginPage />
         </div>
       </div>
@@ -50,13 +55,18 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
-      {/* Background Gradient */}
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 pointer-events-none" />
+    <div className="bg-surface-container-lowest text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden">
+      {/* Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,_#11192e_0%,_#000000_100%)]">
+        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-primary/5 rounded-full animate-orbit"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-secondary/5 rounded-full animate-orbit" style={{animationDirection: "reverse", animationDuration: "45s"}}></div>
+      </div>
+
+      <Header />
 
       {/* Content */}
-      <div className="relative max-w-2xl mx-auto pb-24">
-        {/* Main Page */}
+      <div className="relative z-10">
         <motion.div
           key={store.activeTab}
           initial={{ opacity: 0, x: 20 }}
@@ -70,7 +80,7 @@ function App() {
         {/* Floating Chat Button */}
         <motion.button
           onClick={() => store.setChatWidget(!store.showChatWidget)}
-          className="fixed bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-premium flex items-center justify-center text-2xl z-40 hover:shadow-lg"
+          className="fixed bottom-28 right-6 w-16 h-16 rounded-full bg-gradient-to-r from-primary to-secondary text-surface-lowest shadow-[0_0_20px_rgba(129,236,255,0.4)] flex items-center justify-center text-3xl z-40 hover:scale-110 transition-transform"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           animate={{
@@ -93,10 +103,7 @@ function App() {
         />
 
         {/* Bottom Navigation */}
-        <BottomNav
-          activeTab={store.activeTab}
-          setActiveTab={store.setActiveTab}
-        />
+        <BottomNav />
       </div>
     </div>
   );

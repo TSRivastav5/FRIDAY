@@ -1,39 +1,33 @@
-import { motion } from 'framer-motion';
+import React from 'react';
+import { useFinanceStore } from '../store/financeStore';
 
-export const BottomNav = ({ activeTab, setActiveTab }) => {
-  const tabs = [
-    { id: 'home', icon: '🏠', label: 'Home' },
-    { id: 'expenses', icon: '📊', label: 'Expenses' },
-    { id: 'investments', icon: '📈', label: 'Investments' },
-    { id: 'insights', icon: '💡', label: 'Insights' },
-    { id: 'profile', icon: '👤', label: 'Profile' },
-  ];
+export const BottomNav = () => {
+  const store = useFinanceStore();
+
+  const getTabClass = (tabId) => {
+    return store.activeTab === tabId
+      ? "flex flex-col items-center justify-center text-[#81ecff] scale-110 drop-shadow-[0_0_5px_#81ecff] transition-all"
+      : "flex flex-col items-center justify-center text-[#ac8aff]/50 hover:text-[#81ecff] hover:drop-shadow-md transition-all";
+  };
 
   return (
-    <motion.div
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-t-3xl shadow-premium"
-    >
-      <div className="flex justify-around items-center max-w-4xl mx-auto">
-        {tabs.map((tab) => (
-          <motion.button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-3 text-center transition-colors relative group ${
-              activeTab === tab.id ? 'text-indigo-500' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'
-            }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <div className="text-2xl">{tab.icon}</div>
-            <div className="text-xs font-semibold mt-1">{tab.label}</div>
-            {activeTab === tab.id && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full" />
-            )}
-          </motion.button>
-        ))}
-      </div>
-    </motion.div>
+    <footer className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex gap-8 items-center justify-center py-3 px-8 bg-purple-950/10 dark:bg-black/30 backdrop-blur-2xl rounded-full border border-[#81ecff]/10 shadow-[0_-10px_40px_rgba(0,229,255,0.05)]">
+      <button onClick={() => store.setActiveTab('home')} className={getTabClass('home')}>
+        <span className="material-symbols-outlined text-2xl">terminal</span>
+        <span className="font-label text-[10px] uppercase tracking-tighter mt-1">System</span>
+      </button>
+      <button onClick={() => store.setActiveTab('investments')} className={getTabClass('investments')}>
+        <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
+        <span className="font-label text-[10px] uppercase tracking-tighter mt-1">Capital</span>
+      </button>
+      <button onClick={() => store.setActiveTab('expenses')} className={getTabClass('expenses')}>
+        <span className="material-symbols-outlined text-2xl">query_stats</span>
+        <span className="font-label text-[10px] uppercase tracking-tighter mt-1">Flux</span>
+      </button>
+      <button onClick={() => store.setActiveTab('insights')} className={getTabClass('insights')}>
+        <span className="material-symbols-outlined text-2xl">hub</span>
+        <span className="font-label text-[10px] uppercase tracking-tighter mt-1">Core</span>
+      </button>
+    </footer>
   );
 };

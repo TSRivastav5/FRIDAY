@@ -1,111 +1,137 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BalanceCard } from '../components/BalanceCard';
-import { DashboardCard } from '../components/DashboardCard';
-import { SalaryModal } from '../components/SalaryModal';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
+import { SalaryModal } from '../components/SalaryModal';
 
 export const HomePage = () => {
   const store = useFinanceStore();
   const userName = store.user?.name || "Boss";
   const totalBalance = store.salary?.amount || 0;
-  const monthlySalary = store.salary?.amount || 0;
-  const monthlyExpense = store.expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
-  const investStats = store.portfolioStats || { totalValue: 0, gainPercent: 0 };
-  const currentAllocation = store.currentAllocation || { emi: 0, rent: 0, savings: 0 };
   const showSalaryModal = store.showSalaryModal || false;
 
   return (
-    <div className="pb-32 pt-2">
-      {/* Balance Card */}
-      <BalanceCard
-        userName={userName}
-        balance={totalBalance}
-        monthlySalary={monthlySalary}
-      />
-
-      {/* Quick Actions */}
-      <div className="px-4 space-y-4 mb-8">
-        <motion.button
-          onClick={() => store.setSalaryModal(true)}
-          className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl font-bold text-lg shadow-premium"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          💰 Salary Credited
-        </motion.button>
-
-        {/* Dashboard Cards Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <DashboardCard
-            icon="📊"
-            title="Expenses"
-            value={formatCurrency(monthlyExpense)}
-            subtitle="This month"
-            color="blue"
-          />
-          <DashboardCard
-            icon="📈"
-            title="Investments"
-            value={formatCurrency(investStats.totalValue)}
-            subtitle={`+${investStats.gainPercent.toFixed(1)}%`}
-            color="green"
-          />
+    <main className="relative z-10 pt-32 pb-40 px-4 max-w-7xl mx-auto flex flex-col items-center">
+      <div className="relative w-full max-w-4xl flex flex-col items-center">
+        <div className="relative w-80 h-80 md:w-[450px] md:h-[450px] flex items-center justify-center mb-12">
+          <div className="absolute inset-0 rounded-full border-4 border-primary/20 shadow-[0_0_60px_rgba(129,236,255,0.15)]"></div>
+          <div className="absolute inset-4 rounded-full border border-primary/10 border-dashed animate-orbit"></div>
+          <div className="absolute inset-8 rounded-full border-[10px] border-primary/5"></div>
+          <svg className="absolute inset-0 w-full h-full -rotate-90 drop-shadow-[0_0_15px_rgba(129,236,255,0.4)]" viewBox="0 0 100 100">
+            <circle className="text-primary/10" cx="50" cy="50" fill="none" r="46" stroke="currentColor" strokeWidth="2"></circle>
+            <circle className="text-primary" cx="50" cy="50" fill="none" r="46" stroke="currentColor" strokeDasharray="210 289" strokeWidth="3"></circle>
+          </svg>
+          <div className="text-center z-20">
+            <p className="font-headline text-xs tracking-[0.3em] uppercase text-primary-dim mb-2">Total Capital Flow</p>
+            <h2 className="text-5xl md:text-7xl font-black text-primary font-headline tracking-tighter neon-text-cyan">
+              {formatCurrency(totalBalance)}
+            </h2>
+            <div className="mt-4 flex items-center justify-center gap-2 text-primary-fixed-dim">
+              <span className="material-symbols-outlined text-sm">trending_up</span>
+              <span className="font-label text-sm font-bold tracking-widest">+12.4% SYSTEM GROWTH</span>
+            </div>
+          </div>
         </div>
-
-        {/* Additional Info Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <DashboardCard
-            icon="💳"
-            title="Bills & EMI"
-            value={formatCurrency(currentAllocation.emi + currentAllocation.rent)}
-            subtitle="Monthly"
-            color="orange"
-          />
-          <DashboardCard
-            icon="🏦"
-            title="Savings"
-            value={formatCurrency(currentAllocation.savings)}
-            subtitle="Reserved"
-            color="purple"
-          />
-        </div>
-      </div>
-
-      {/* Recent Insights */}
-      <div className="px-4">
-        <h2 className="text-xl font-bold mb-4">💡 FRIDAY Insights</h2>
-        <div className="space-y-3">
-          {[
-            { icon: '📊', title: 'Spending Alert', desc: 'You spent 25% more on food this month' },
-            { icon: '📈', title: 'Investment Gain', desc: 'Your SIP gained 4.2% this quarter' },
-            { icon: '💡', title: 'Opportunity', desc: 'You can increase SIP by ₹2,000' },
-          ].map((insight, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-4 flex gap-3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.1 }}
-            >
-              <span className="text-2xl">{insight.icon}</span>
-              <div>
-                <p className="font-semibold text-sm">{insight.title}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-400">{insight.desc}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-12">
+          <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+            <div className="flex items-center justify-between mb-6">
+              <span className="font-label text-xs tracking-widest text-secondary uppercase font-bold">Monthly Salary Status</span>
+              <span className="material-symbols-outlined text-secondary">payments</span>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <div>
+                  <p className="text-3xl font-headline font-bold text-on-surface">94%</p>
+                  <p className="text-[10px] text-on-surface-variant font-label tracking-wider uppercase">Allocated</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-headline font-semibold text-secondary">{formatCurrency(totalBalance)}</p>
+                  <p className="text-[10px] text-on-surface-variant font-label tracking-wider uppercase">Current Cycle</p>
+                </div>
               </div>
-            </motion.div>
-          ))}
+              <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+                <div className="h-full bg-secondary w-[94%] shadow-[0_0_10px_rgba(172,138,255,0.5)]"></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-2 glass-panel p-6 rounded-2xl flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-4">
+              <span className="font-label text-xs tracking-widest text-primary uppercase font-bold">Active Protocols</span>
+              <div className="flex gap-2 items-center">
+                <span className="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
+                <span className="text-[10px] font-label text-primary-fixed uppercase tracking-tighter">Real-time sync active</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => store.setSalaryModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full hover:bg-primary/20 transition-all group">
+                <span className="material-symbols-outlined text-primary text-lg">bolt</span>
+                <span className="font-label text-xs font-bold tracking-widest text-primary uppercase">Credit Salary</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary/20 rounded-full hover:bg-secondary/20 transition-all group">
+                <span className="material-symbols-outlined text-secondary text-lg">security</span>
+                <span className="font-label text-xs font-bold tracking-widest text-secondary uppercase">Lock Assets</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-surface-variant/40 border border-outline-variant/30 rounded-full hover:bg-surface-variant transition-all group">
+                <span className="material-symbols-outlined text-on-surface-variant text-lg">sync</span>
+                <span className="font-label text-xs font-bold tracking-widest text-on-surface-variant uppercase">Flux Sync</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-surface-variant/40 border border-outline-variant/30 rounded-full hover:bg-surface-variant transition-all group">
+                <span className="material-symbols-outlined text-on-surface-variant text-lg">database</span>
+                <span className="font-label text-xs font-bold tracking-widest text-on-surface-variant uppercase">Data Dump</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-primary">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Liquidity</p>
+              <p className="text-sm font-headline font-bold">{formatCurrency((store.salary?.amount || 0) * 0.2)}</p>
+            </div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-secondary">
+            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-secondary">query_stats</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Flux Delta</p>
+              <p className="text-sm font-headline font-bold">+1.82%</p>
+            </div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-tertiary">
+            <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-tertiary">hub</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Node Load</p>
+              <p className="text-sm font-headline font-bold">24.5 ms</p>
+            </div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-error">
+            <div className="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-error">terminal</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Sys Health</p>
+              <p className="text-sm font-headline font-bold text-error">CRITICAL</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Salary Modal */}
+      
       <SalaryModal
         isOpen={showSalaryModal}
         onClose={() => store.setSalaryModal?.(false)}
         onSubmit={store.updateAllocation}
-        currentAllocation={currentAllocation}
+        currentAllocation={store.currentAllocation || { emi: 0, rent: 0, savings: 0 }}
       />
-    </div>
+    </main>
   );
 };

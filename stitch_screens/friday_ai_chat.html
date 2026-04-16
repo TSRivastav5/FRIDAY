@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FRIDAY - Ethereal Command Interface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#73a2ff",
+                        "on-tertiary-container": "#000311",
+                        "tertiary-dim": "#699cff",
+                        "on-secondary": "#280067",
+                        "surface-tint": "#81ecff",
+                        "on-primary-fixed": "#003840",
+                        "inverse-primary": "#006976",
+                        "on-surface": "#dfe4fe",
+                        "secondary-dim": "#8455ef",
+                        "error": "#ff716c",
+                        "secondary-container": "#5516be",
+                        "secondary": "#ac8aff",
+                        "on-tertiary-fixed": "#00163b",
+                        "secondary-fixed-dim": "#ceb9ff",
+                        "on-tertiary-fixed-variant": "#00377b",
+                        "on-error": "#490006",
+                        "background": "#070d1f",
+                        "surface-dim": "#070d1f",
+                        "tertiary-fixed": "#8ab0ff",
+                        "secondary-fixed": "#dac9ff",
+                        "primary-fixed-dim": "#00d4ec",
+                        "on-secondary-fixed-variant": "#5f28c8",
+                        "surface-container-highest": "#1c253e",
+                        "on-secondary-fixed": "#40009b",
+                        "error-container": "#9f0519",
+                        "surface-container-low": "#0c1326",
+                        "on-primary-fixed-variant": "#005762",
+                        "primary-fixed": "#00e3fd",
+                        "on-surface-variant": "#a5aac2",
+                        "surface-container-high": "#171f36",
+                        "tertiary-container": "#4388fd",
+                        "surface-container": "#11192e",
+                        "primary-dim": "#00d4ec",
+                        "inverse-surface": "#faf8ff",
+                        "outline": "#6f758b",
+                        "on-primary": "#005762",
+                        "surface-bright": "#222b47",
+                        "surface-container-lowest": "#000000",
+                        "on-error-container": "#ffa8a3",
+                        "primary": "#81ecff",
+                        "outline-variant": "#41475b",
+                        "primary-container": "#00e3fd",
+                        "on-primary-container": "#004d57",
+                        "on-background": "#dfe4fe",
+                        "inverse-on-surface": "#4f5469",
+                        "error-dim": "#d7383b",
+                        "on-secondary-container": "#d9c8ff",
+                        "surface-variant": "#1c253e",
+                        "surface": "#070d1f",
+                        "tertiary": "#699cff",
+                        "on-tertiary": "#001e4a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .holographic-glow {
+            box-shadow: 0 0 20px rgba(129, 236, 255, 0.15), inset 0 0 10px rgba(129, 236, 255, 0.1);
+        }
+        .ai-core-pulse {
+            background: radial-gradient(circle, rgba(129,236,255,0.8) 0%, rgba(129,236,255,0.2) 50%, transparent 70%);
+        }
+        .radar-scanner {
+            background: conic-gradient(from 0deg, transparent 0%, rgba(129,236,255,0.1) 10%, transparent 20%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(129, 236, 255, 0.1);
+        }
+        body {
+            background-color: #000000;
+            overflow: hidden;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body text-on-surface selection:bg-primary/30">
+<!-- Ambient Background Layer -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface-container-low via-surface-container-lowest to-surface-container-lowest"></div>
+<div class="absolute inset-0 radar-scanner opacity-40 rotate-12"></div>
+<div class="absolute top-1/4 left-1/4 w-96 h-96 bg-secondary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px]"></div>
+<!-- Grid Pattern Overlay -->
+<div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(#81ecff 1px, transparent 1px), linear-gradient(90deg, #81ecff 1px, transparent 1px); background-size: 50px 50px;"></div>
+</div>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full h-16 bg-black/40 backdrop-blur-xl border-b border-cyan-400/20 z-50 flex justify-between items-center px-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-cyan-400" style="font-variation-settings: 'FILL' 1;">account_tree</span>
+<h1 class="text-lg font-bold text-cyan-400 tracking-tighter font-headline uppercase">COMMAND_CENTER</h1>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-cyan-400 font-['Space_Grotesk'] tracking-[0.15em] uppercase text-xs font-bold transition-all duration-300 hover:text-cyan-300" href="#">SYSTEM</a>
+<a class="text-cyan-400/60 font-['Space_Grotesk'] tracking-[0.15em] uppercase text-xs font-bold transition-all duration-300 hover:text-cyan-300" href="#">TELEMETRY</a>
+<a class="text-cyan-400/60 font-['Space_Grotesk'] tracking-[0.15em] uppercase text-xs font-bold transition-all duration-300 hover:text-cyan-300" href="#">NODES</a>
+</nav>
+<div class="cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-cyan-400">settings_input_component</span>
+</div>
+</header>
+<!-- Main Command Interface -->
+<main class="relative z-10 w-full h-screen flex flex-col pt-20 pb-32 max-w-5xl mx-auto px-4 md:px-8">
+<!-- AI Core Projection Area -->
+<div class="flex-none flex flex-col items-center justify-center mb-12">
+<div class="relative w-32 h-32 flex items-center justify-center">
+<div class="absolute inset-0 ai-core-pulse rounded-full animate-pulse opacity-60"></div>
+<div class="absolute inset-0 border-2 border-primary/20 rounded-full animate-spin [animation-duration:8s]"></div>
+<div class="absolute inset-2 border border-secondary/30 rounded-full animate-spin [animation-duration:12s] direction-reverse"></div>
+<div class="w-16 h-16 bg-primary-container/20 rounded-full glass-panel flex items-center justify-center holographic-glow">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="absolute -bottom-6 flex flex-col items-center">
+<span class="font-headline text-[10px] tracking-[0.3em] text-primary uppercase font-bold">CORE_ACTIVE</span>
+<div class="flex gap-1 mt-1">
+<div class="w-1 h-1 bg-primary rounded-full"></div>
+<div class="w-1 h-1 bg-primary/40 rounded-full"></div>
+<div class="w-1 h-1 bg-primary/20 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat History Container -->
+<div class="flex-grow overflow-y-auto space-y-8 pr-4 custom-scrollbar scroll-smooth">
+<!-- AI Message -->
+<div class="flex flex-col items-start gap-2 max-w-[85%]">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-headline font-bold text-secondary uppercase tracking-widest">F.R.I.D.A.Y. // PROTOCOL_01</span>
+</div>
+<div class="glass-panel p-4 rounded-xl rounded-tl-none relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<p class="text-on-surface text-sm leading-relaxed font-body">Systems online. All holographic matrices calibrated. How may I assist your command today?</p>
+<div class="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[14px] text-outline">content_copy</span>
+</div>
+</div>
+<span class="text-[9px] font-headline text-outline uppercase">14:22:01</span>
+</div>
+<!-- User Message -->
+<div class="flex flex-col items-end gap-2 ml-auto max-w-[85%]">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-headline font-bold text-primary uppercase tracking-widest">USER_CMD // ROOT_EXEC</span>
+</div>
+<div class="glass-panel p-4 rounded-xl rounded-tr-none bg-primary/5 border-primary/20 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-1 h-full bg-primary"></div>
+<p class="text-on-surface text-sm leading-relaxed font-body">Initialize diagnostic scan of the orbital defense grid and report any anomalies in Sector 7.</p>
+</div>
+<span class="text-[9px] font-headline text-outline uppercase">14:22:15</span>
+</div>
+<!-- AI Message (Glitch Effect Style) -->
+<div class="flex flex-col items-start gap-2 max-w-[85%]">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-headline font-bold text-secondary uppercase tracking-widest">F.R.I.D.A.Y. // PROCESSING</span>
+</div>
+<div class="glass-panel p-4 rounded-xl rounded-tl-none relative overflow-hidden bg-surface-container-high/40">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary-container"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-2 text-primary text-[10px] font-headline font-bold">
+<span class="material-symbols-outlined text-sm animate-pulse">radar</span>
+                            SCANNING_SECTOR_07...
+                        </div>
+<p class="text-on-surface text-sm leading-relaxed font-body">Diagnostic complete. I've detected a subtle phase variance in the secondary power coupling. Efficiency is down 4.2%. Re-routing energy through the auxiliary manifold.</p>
+<div class="grid grid-cols-2 gap-2 mt-2">
+<div class="bg-surface-container p-2 rounded border border-outline-variant/30">
+<div class="text-[8px] text-outline uppercase font-headline">Status</div>
+<div class="text-primary-fixed text-xs font-bold font-headline">OPTIMIZING</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-outline-variant/30">
+<div class="text-[8px] text-outline uppercase font-headline">Anomaly</div>
+<div class="text-error text-xs font-bold font-headline">PHASE_DRIFT</div>
+</div>
+</div>
+</div>
+</div>
+<span class="text-[9px] font-headline text-outline uppercase">14:22:18</span>
+</div>
+</div>
+</main>
+<!-- Bottom Input Section -->
+<div class="fixed bottom-0 left-0 w-full p-6 bg-gradient-to-t from-surface-container-lowest via-surface-container-lowest/90 to-transparent z-40">
+<div class="max-w-5xl mx-auto">
+<!-- Typing Indicator/Waveform -->
+<div class="flex items-center gap-3 mb-4 px-4 h-6">
+<div class="flex items-end gap-[2px] h-3">
+<div class="w-1 h-1 bg-primary rounded-full"></div>
+<div class="w-1 h-3 bg-primary rounded-full"></div>
+<div class="w-1 h-2 bg-primary rounded-full"></div>
+<div class="w-1 h-4 bg-primary rounded-full"></div>
+<div class="w-1 h-2 bg-primary rounded-full"></div>
+<div class="w-1 h-1 bg-primary rounded-full"></div>
+</div>
+<span class="text-[10px] font-headline font-medium text-primary/60 tracking-widest uppercase">VOICE_INPUT_ACTIVE</span>
+</div>
+<!-- Glowing Input Field -->
+<div class="relative group">
+<div class="absolute -inset-[1px] bg-gradient-to-r from-primary/30 via-secondary/30 to-primary/30 rounded-full blur opacity-50 group-focus-within:opacity-100 transition-opacity"></div>
+<div class="relative flex items-center bg-surface-container-highest/60 backdrop-blur-2xl rounded-full px-6 py-4 glass-panel border-primary/20">
+<span class="material-symbols-outlined text-primary/60 mr-4">keyboard</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline/50 w-full font-body text-sm" placeholder="Awaiting command input..." type="text"/>
+<div class="flex items-center gap-4 ml-4">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-primary/10 transition-colors text-primary">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="bg-primary/10 text-primary p-2 px-6 rounded-full font-headline font-bold text-xs tracking-widest border border-primary/30 hover:bg-primary hover:text-on-primary transition-all active:scale-95">
+                            EXECUTE
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Shell (JSON Defined) -->
+<div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center justify-around gap-4 px-4 py-2 bg-purple-900/20 backdrop-blur-2xl w-auto min-w-[280px] rounded-full border border-white/10 shadow-[0_0_30px_rgba(172,138,255,0.15)] md:hidden">
+<div class="bg-cyan-400/20 text-cyan-400 rounded-full p-3 shadow-[0_0_10px_rgba(0,229,255,0.4)] animate-pulse-slow active:scale-90 cursor-pointer">
+<span class="material-symbols-outlined">smart_toy</span>
+</div>
+<div class="text-purple-300/50 p-3 hover:text-cyan-200 hover:scale-110 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div class="text-purple-300/50 p-3 hover:text-cyan-200 hover:scale-110 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">monitoring</span>
+</div>
+<div class="text-purple-300/50 p-3 hover:text-cyan-200 hover:scale-110 transition-all duration-300 cursor-pointer">
+<span class="material-symbols-outlined">hub</span>
+</div>
+</div>
+<!-- Background Decoration Images -->
+<div class="fixed top-20 right-8 w-48 h-48 opacity-20 pointer-events-none hidden lg:block">
+<img alt="Data Visualization" class="w-full h-full object-contain filter grayscale invert brightness-200 contrast-125" data-alt="Abstract 3D holographic data visualization showing glowing blue neural network connections on a dark tech background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCjNeGE7J9nobfevmyGty5C1OOJVGdbbWKJxGB7j83BFBkmeKYb8y8xazX6KKimB2XilWyo_13RV4Osrysouw5Yqbz0aZxtSB-yjIXml3vaQtle2mENtlRyBnlBMM2GF9EN6Mei2raIPZZa7iC7CWtBMSlLefZkJjR0P2u59UObJN24pI4iu3mO3yOJTze1J0WlRTv_oC6NpIUxt3KgYZTkThdQxEcanqKzJVJHXQ5DIHirsqcT5F0pxp8FvBTTGKSWek8gQ-4oLc"/>
+</div>
+</body></html>

@@ -6,151 +6,132 @@ import { formatCurrency } from '../utils/helpers';
 export const ProfilePage = () => {
   const store = useFinanceStore();
 
-  const stats = store.portfolioStats || { totalInvested: 0, totalValue: 0, gainPercent: 0, gain: 0 };
-  const monthlyExpenses = store.expenses || [];
-  const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
   const userName = store.user?.name || "Boss";
+  const stats = store.portfolioStats || { totalInvested: 0, totalValue: 0, gainPercent: 0, gain: 0 };
   const totalBalance = store.salary?.amount || 0;
-  const monthlySalary = store.salary?.amount || 0;
 
   return (
-    <div className="pb-32 pt-4 px-4">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">👤 Profile</h1>
-          <button 
-            onClick={() => store.logout()} 
-            className="px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl text-sm font-semibold shadow-premium hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
-          >
-            Log Out
-          </button>
-        </div>
-
-        {/* User Card */}
-        <motion.div
-          className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl p-8 mb-6 shadow-premium"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="text-5xl mb-4">👋</div>
-          <h2 className="text-3xl font-bold">{userName}</h2>
-          <p className="opacity-75 mt-2">Financial Freedom Seeker</p>
-        </motion.div>
-
-        {/* Financial Stats */}
-        <h3 className="font-bold text-lg mb-4">💰 Your Financial Stats</h3>
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {[
-            { label: 'Total Balance', value: formatCurrency(totalBalance), icon: '💳' },
-            { label: 'Monthly Salary', value: formatCurrency(monthlySalary), icon: '💵' },
-            { label: 'Total Invested', value: formatCurrency(stats.totalInvested), icon: '📈' },
-            { label: 'Investment Gain', value: formatCurrency(stats.gain), icon: '📊' },
-            { label: 'Monthly Expenses', value: formatCurrency(totalMonthly), icon: '💸' },
-            { label: 'Transaction Count', value: monthlyExpenses.length, icon: '📝' },
-          ].map((stat, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-premium"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <div className="text-2xl mb-2">{stat.icon}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400">{stat.label}</p>
-              <p className="font-bold text-lg mt-1">{stat.value}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Settings */}
-        <h3 className="font-bold text-lg mb-4">⚙️ Settings</h3>
-        <div className="space-y-3">
-          {[
-            { icon: '🌙', label: 'Dark Mode', toggle: true },
-            { icon: '🔔', label: 'Salary Reminders', toggle: true },
-            { icon: '📧', label: 'Email Notifications', toggle: false },
-            { icon: '📱', label: 'Budget Alerts', toggle: true },
-            { icon: '🔐', label: 'Two Factor Auth', toggle: false },
-          ].map((setting, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-white dark:bg-gray-800 rounded-2xl p-4 flex items-center justify-between shadow-premium"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{setting.icon}</span>
-                <span className="font-semibold text-sm">{setting.label}</span>
-              </div>
-              <button
-                onClick={() => store.toggleDarkMode()}
-                className={`relative w-12 h-7 rounded-full transition-colors ${
-                  setting.toggle
-                    ? 'bg-indigo-500 dark:bg-indigo-600'
-                    : 'bg-gray-300 dark:bg-gray-600'
-                }`}
-              >
-                <motion.div
-                  className="absolute top-1 left-1 w-5 h-5 bg-white rounded-full"
-                  animate={{ x: setting.toggle ? 20 : 0 }}
-                />
-              </button>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Family Section */}
-        <h3 className="font-bold text-lg mb-4 mt-8">👨‍👩‍👧‍👦 Family Protocol</h3>
-        <motion.div
-           className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-premium"
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={{ opacity: 1, scale: 1 }}
-        >
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-            You have Administrative privileges. You can initialize access for other family members.
-          </p>
-          <button 
-            onClick={() => alert("Family Member Module will be unlocked soon!")}
-            className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-transform hover:scale-[1.02]"
-          >
-            + Initiate Family Access
-          </button>
-        </motion.div>
-
-        {/* About Section */}
-        <motion.div
-          className="bg-white dark:bg-gray-800 rounded-3xl p-6 mt-8 shadow-premium"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h3 className="font-bold text-lg mb-4">ℹ️ About FRIDAY</h3>
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-            FRIDAY (Financial Resource Intelligent Daily Assistant for You) is your personal AI-powered financial companion.
-          </p>
-          <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <p>✓ Track expenses and income</p>
-            <p>✓ Get AI-powered financial insights</p>
-            <p>✓ Manage investments portfolio</p>
-            <p>✓ Automatic salary allocation</p>
-            <p>✓ Smart financial suggestions</p>
+    <main className="pt-28 pb-32 px-4 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-8">
+      {/* Profile Core Header */}
+      <section className="col-span-12 flex flex-col items-center justify-center py-12 relative">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent blur-3xl pointer-events-none"></div>
+        <div className="relative w-40 h-40 group">
+          <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/40 transition-all duration-700"></div>
+          <div className="relative w-full h-full rounded-full border border-primary/40 p-2 glass-panel shadow-[0_0_50px_rgba(129,236,255,0.2)]">
+            <div className="w-full h-full rounded-full overflow-hidden bg-surface-container-highest flex items-center justify-center">
+              <img 
+                alt="Avatar" 
+                className="w-full h-full scale-110 object-cover" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCX0xxkFY5XGvL5V1FBPkkAaob4937P2y3M3RJ9DbQw74sTgyAIlMOn1k20oEXYFkIg2PYiGAuiJWdIDYV6Ck-Q-3JwGIPTdzuFxNQE3FJsVTZQSpdtf_OhiVn352t4iBrRsH7I0bOnJxjE0JQNJKikbRdAvqj4cBomb0_BJQmvg6pvu415tFBoXMifvBPFv5WMN6jc-cTXO9KDF3xcRnOuU1vINj9JwAMNSbisVTYlFURbT4qm8vB-iBCV4AnXkE0RVr8VW-hoJ0"
+              />
+            </div>
+            {/* Orbiting Status Ring */}
+            <div className="absolute -inset-4 border-2 border-dashed border-secondary/30 rounded-full animate-orbit pointer-events-none"></div>
           </div>
-        </motion.div>
+        </div>
+        <div className="mt-8 text-center text-on-surface">
+          <h1 className="font-headline text-4xl font-bold tracking-tight uppercase mb-2">{userName}</h1>
+          <p className="font-label text-primary text-sm tracking-[0.3em] font-medium uppercase">Node ID: FRD-{store.user?._id?.substring(0,4) || '9982'}-ALPHA</p>
+        </div>
+      </section>
 
-        {/* App Info */}
-        <motion.div
-          className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-3xl p-6 mt-8 text-center text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          <p className="font-semibold">FRIDAY v1.0.0</p>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Built with ❤️ for your financial freedom</p>
-          <p className="text-xs text-gray-500 mt-4">© 2026 FRIDAY Finance</p>
-        </motion.div>
-      </motion.div>
-    </div>
+      {/* Main Bento Grid */}
+      <div className="col-span-12 md:col-span-7 space-y-6">
+        {/* Glass Settings Panel */}
+        <div className="glass-panel border border-primary/10 rounded-xl p-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span className="material-symbols-outlined text-8xl pointer-events-none">tune</span>
+          </div>
+          <h2 className="font-headline text-xl font-bold text-primary mb-8 tracking-widest uppercase flex items-center gap-3">
+            <span className="material-symbols-outlined" style={{fontVariationSettings: "'FILL' 1"}}>terminal</span>
+            System Calibration
+          </h2>
+          <div className="space-y-8 relative z-10">
+            {/* Toggle Switch: Dark Mode */}
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col text-on-surface">
+                <span className="font-headline text-sm font-bold uppercase tracking-widest">Stealth Protocol</span>
+                <span className="text-xs text-on-surface-variant font-body mt-0.5">Global dark mode visualization engine</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked={store.isDarkMode} onChange={store.toggleDarkMode} className="sr-only peer"/>
+                <div className="w-14 h-7 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-primary after:border-primary/50 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary/20 peer-checked:shadow-[0_0_15px_rgba(129,236,255,0.4)]"></div>
+              </label>
+            </div>
+            
+            {/* Toggle Switch: Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col text-on-surface">
+                <span className="font-headline text-sm font-bold uppercase tracking-widest">Neural Feed</span>
+                <span className="text-xs text-on-surface-variant font-body mt-0.5">Direct telemetry stream notifications</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked={true} />
+                <div className="w-14 h-7 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-primary after:border-primary/50 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary/20 peer-checked:shadow-[0_0_15px_rgba(129,236,255,0.4)]"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Actions */}
+        <div className="grid grid-cols-2 gap-4">
+          <button onClick={() => alert("Access Logs initializing...")} className="flex items-center justify-center gap-3 py-4 glass-panel border border-primary/10 rounded-xl font-headline text-xs font-bold uppercase tracking-[0.2em] text-primary hover:bg-primary/10 transition-all duration-300">
+            <span className="material-symbols-outlined text-lg">history</span>
+            Access Logs
+          </button>
+          <button onClick={() => store.logout()} className="flex items-center justify-center gap-3 py-4 glass-panel border border-error/20 rounded-xl font-headline text-xs font-bold uppercase tracking-[0.2em] text-error hover:bg-error/10 transition-all duration-300">
+            <span className="material-symbols-outlined text-lg">power_settings_new</span>
+            Deactivate
+          </button>
+        </div>
+      </div>
+
+      {/* Sidebar: Financial Hologram Stats */}
+      <aside className="col-span-12 md:col-span-5 space-y-6">
+        <div className="glass-panel border border-secondary/20 rounded-xl p-6 relative overflow-hidden">
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-secondary/5 to-transparent -z-10"></div>
+          <div className="flex items-center justify-between mb-8 text-secondary">
+            <h3 className="font-headline text-sm font-bold uppercase tracking-[0.2em]">Capital Flow</h3>
+            <span className="material-symbols-outlined opacity-50">query_stats</span>
+          </div>
+          <div className="space-y-6">
+            <div className="relative">
+              <p className="text-[10px] text-secondary/60 font-headline uppercase mb-1">Total Liquidity</p>
+              <p className="text-4xl font-headline font-bold text-on-surface tracking-tighter">
+                {formatCurrency(totalBalance)}
+              </p>
+              <div className="w-full h-1 bg-surface-container-high rounded-full mt-4 overflow-hidden">
+                <div className="w-[70%] h-full bg-secondary shadow-[0_0_10px_rgba(172,138,255,0.5)]"></div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-secondary/10">
+              <div>
+                <p className="text-[10px] text-secondary/60 font-headline uppercase">Yield 24H</p>
+                <p className="text-lg font-headline font-medium text-primary-dim">{stats.gain >= 0 ? '+' : ''}{stats.gainPercent.toFixed(1)}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-secondary/60 font-headline uppercase">Risk Index</p>
+                <p className="text-lg font-headline font-medium text-secondary-fixed">LOW</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* System Health */}
+        <div className="rounded-xl border border-primary/20 p-4 flex items-center gap-4 bg-primary/5">
+          <div className="relative w-12 h-12">
+            <svg className="w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 36 36">
+              <path className="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3"></path>
+              <path className="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="85, 100" strokeLinecap="round" strokeWidth="3"></path>
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] font-headline text-primary font-bold">85%</span>
+          </div>
+          <div className="text-on-surface">
+            <p className="font-headline text-[10px] uppercase font-bold text-primary">Node Stability</p>
+            <p className="text-xs text-on-surface-variant">Syncing with global matrix...</p>
+          </div>
+        </div>
+      </aside>
+    </main>
   );
 };
