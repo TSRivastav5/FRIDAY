@@ -39,7 +39,14 @@ router.get("/", async (req, res) => {
 router.get("/market/quote/:symbol", async (req, res) => {
   try {
     const { symbol } = req.params;
-    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`);
+    const response = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      }
+    );
     const data = await response.json();
     
     if (data.chart?.error) {
