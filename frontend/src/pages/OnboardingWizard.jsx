@@ -12,10 +12,10 @@ export const OnboardingWizard = () => {
   const [salary, setSalary] = useState('85000');
   
   // Custom allocations
-  const [emi, setEmi] = useState(15000);
-  const [rent, setRent] = useState(12000);
-  const [bills, setBills] = useState(4000);
-  const [sip, setSip] = useState(10000);
+  const [emi, setEmi] = useState(0);
+  const [rent, setRent] = useState(0);
+  const [bills, setBills] = useState(0);
+  const [sip, setSip] = useState(0);
 
   const parsedSalary = parseInt(salary) || 0;
   const totalAllocated = emi + rent + bills + sip;
@@ -43,13 +43,6 @@ export const OnboardingWizard = () => {
       alert('Please enter a valid salary amount');
       return;
     }
-    
-    // Set some defaults based on salary to make it feel smart
-    const sal = parseInt(salary);
-    setEmi(Math.round(sal * 0.20));
-    setRent(Math.round(sal * 0.15));
-    setBills(Math.round(sal * 0.05));
-    setSip(Math.round(sal * 0.12));
 
     setStep('commitments');
   };
