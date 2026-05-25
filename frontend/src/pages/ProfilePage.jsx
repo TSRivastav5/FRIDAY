@@ -140,10 +140,26 @@ export const ProfilePage = () => {
             </div>
           </div>
 
+          {/* Reset Allocations Section */}
+          {store.currentAllocation && (
+            <button
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to reset all your allocations and salary back to ₹0?")) {
+                  await store.resetAllocation();
+                  alert("Allocations & salary have been reset successfully.");
+                }
+              }}
+              className="w-full mt-4 flex items-center justify-center gap-2 p-4 text-error font-semibold bg-white border-[0.5px] border-error/25 rounded-xl hover:bg-error/5 transition-colors active:scale-95 text-sm"
+            >
+              <span className="material-symbols-outlined">restart_alt</span>
+              <span>Reset Allocations & Salary</span>
+            </button>
+          )}
+
           {/* Logout Section */}
           <button 
             onClick={handleLogout}
-            className="w-full mt-4 flex items-center justify-center gap-2 p-4 text-error font-semibold bg-error/5 border-[0.5px] border-error/20 rounded-xl hover:bg-error/10 transition-colors active:scale-95"
+            className="w-full mt-2 flex items-center justify-center gap-2 p-4 text-error font-semibold bg-error/5 border-[0.5px] border-error/20 rounded-xl hover:bg-error/10 transition-colors active:scale-95"
           >
             <span className="material-symbols-outlined">logout</span>
             <span className="text-sm">Sign Out</span>

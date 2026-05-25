@@ -183,21 +183,6 @@ export const HomePage = () => {
               <span className="text-lg">Credited!</span>
             </button>
           )}
-
-          {/* Reset Allocations Button */}
-          {store.currentAllocation && (
-            <button
-              onClick={async () => {
-                if (window.confirm("Are you sure you want to reset all your allocations and salary back to ₹0?")) {
-                  await store.resetAllocation();
-                }
-              }}
-              className="w-full bg-white text-error border border-error/25 hover:bg-error/5 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all text-xs"
-            >
-              <span className="material-symbols-outlined text-sm">restart_alt</span>
-              <span>Reset Allocations & Salary</span>
-            </button>
-          )}
         </div>
       </main>
     </div>
