@@ -8,6 +8,7 @@ import { AskAiPage } from './pages/AskAiPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { BottomNav } from './components/BottomNav';
 import { LoginPage } from './pages/LoginPage';
+import { SalaryModal } from './components/SalaryModal';
 import './index.css';
 
 function App() {
@@ -52,6 +53,23 @@ function App() {
     );
   }
 
+  // Calculate dynamic default allocation values for the modal
+  const emi = store.currentAllocation?.emi ?? 18000;
+  const sip = store.currentAllocation?.sip ?? 10000;
+  const rent = store.currentAllocation?.rent ?? 12000;
+  const travel = store.currentAllocation?.travel ?? 6000;
+  const bills = store.currentAllocation?.bills ?? 3500;
+  const totalSalary = store.salary?.amount || 85000;
+  
+  const currentAllocation = store.currentAllocation || {
+    salary: totalSalary,
+    emi,
+    rent,
+    travel,
+    sip,
+    bills
+  };
+
   return (
     <div className="bg-background text-on-surface font-body selection:bg-primary/30 selection:text-primary min-h-screen overflow-x-hidden">
       {/* Content */}
@@ -69,6 +87,13 @@ function App() {
         {/* Bottom Navigation */}
         <BottomNav />
       </div>
+
+      <SalaryModal
+        isOpen={store.showSalaryModal}
+        onClose={() => store.setSalaryModal(false)}
+        onSubmit={store.updateAllocation}
+        currentAllocation={currentAllocation}
+      />
     </div>
   );
 }

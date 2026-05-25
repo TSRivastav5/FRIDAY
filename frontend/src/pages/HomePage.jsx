@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
-import { SalaryModal } from '../components/SalaryModal';
 
 export const HomePage = () => {
   const store = useFinanceStore();
@@ -186,13 +185,6 @@ export const HomePage = () => {
           )}
         </div>
       </main>
-
-      <SalaryModal
-        isOpen={showSalaryModal}
-        onClose={() => store.setSalaryModal(false)}
-        onSubmit={store.updateAllocation}
-        currentAllocation={store.currentAllocation || { salary: totalSalary, emi, rent, travel, sip, bills }}
-      />
     </div>
   );
 };

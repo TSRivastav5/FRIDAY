@@ -120,21 +120,21 @@ export const SalaryModal = ({ isOpen, onClose, onSubmit, currentAllocation }) =>
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black/60 flex items-end justify-center z-50 px-0 sm:px-4"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="bg-background w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 overflow-hidden flex flex-col max-h-[85vh] shadow-xl border-[0.5px] border-outline-variant/30 text-left"
-            initial={{ y: 500 }}
+            className="bg-background w-full max-w-md rounded-2xl p-5 overflow-hidden flex flex-col max-h-[80vh] shadow-2xl border-[0.5px] border-outline-variant/30 text-left"
+            initial={{ y: 50 }}
             animate={{ y: 0 }}
-            exit={{ y: 500 }}
+            exit={{ y: 50 }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Scrollable Container wrapper to prevent height overflow cutoff */}
-            <div className="overflow-y-auto pr-1 flex-grow space-y-5 no-scrollbar max-h-[calc(85vh-120px)]">
+            <div className="overflow-y-auto pr-1 flex-grow space-y-4 no-scrollbar max-h-[calc(80vh-60px)] pb-4">
               <AnimatePresence mode="wait">
                 {/* STEP 1: Salary Input */}
                 {step === 'input' && (
