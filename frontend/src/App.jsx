@@ -9,6 +9,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { BottomNav } from './components/BottomNav';
 import { LoginPage } from './pages/LoginPage';
 import { SalaryModal } from './components/SalaryModal';
+import { LockScreen } from './components/LockScreen';
+import { OnboardingWizard } from './pages/OnboardingWizard';
 import './index.css';
 
 function App() {
@@ -20,6 +22,14 @@ function App() {
       document.documentElement.classList.add('dark');
     }
   }, []);
+
+  useEffect(() => {
+    if (store.isAuthenticated) {
+      store.fetchCurrentSalary?.();
+      store.fetchInvestments?.();
+      store.fetchExpenses?.();
+    }
+  }, [store.isAuthenticated]);
 
   const renderPage = () => {
     switch (store.activeTab) {
@@ -51,6 +61,26 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  // 1. Lock screen guard for returning users
+  if (store.isLocked) {
+    return <LockScreen />;
+  }
+
+  // 2. Loading state splash screen while checking current month's record
+  if (store.isLoading && !store.salary) {
+    return (
+      <div className="fixed inset-0 bg-[#0d1326] text-white flex flex-col justify-center items-center gap-4 z-[250]">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs text-white/50 uppercase tracking-widest font-semibold animate-pulse">Initializing FinVault Protocols...</p>
+      </div>
+    );
+  }
+
+  // 3. Forced onboarding wizard for first-time users (no salary created)
+  if (!store.salary) {
+    return <OnboardingWizard />;
   }
 
   // Calculate dynamic default allocation values for the modal

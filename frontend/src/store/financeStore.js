@@ -20,6 +20,15 @@ export const useFinanceStore = create(
       error: null,
       showSalaryModal: false,
       setSalaryModal: (isOpen) => set({ showSalaryModal: isOpen }),
+      
+      // ──────── Security State ────────
+      isLocked: fridayAPI.isLoggedIn(),
+      pin: localStorage.getItem("friday_pin") || null,
+      setPin: (newPin) => {
+        localStorage.setItem("friday_pin", newPin);
+        set({ pin: newPin });
+      },
+      setLocked: (locked) => set({ isLocked: locked }),
 
       // ──────── Financial Data ────────
       salary: null,
@@ -124,6 +133,29 @@ export const useFinanceStore = create(
         } catch (error) {
           set({ error: error.message, isLoading: false });
           throw error;
+        }
+      },
+
+      fetchCurrentSalary: async () => {
+        set({ isLoading: true });
+        try {
+          const data = await fridayAPI.getCurrentSalary();
+          if (data.salary) {
+            set({ 
+              salary: data.salary,
+              currentAllocation: data.salary.allocation,
+              isLoading: false 
+            });
+          } else {
+            set({ 
+              salary: null,
+              currentAllocation: null,
+              isLoading: false 
+            });
+          }
+          return data;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
         }
       },
 

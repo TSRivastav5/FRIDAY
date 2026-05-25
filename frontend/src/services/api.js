@@ -98,6 +98,9 @@ class FridayAPI {
   getSalaryHistory() {
     return this.get("/salary");
   }
+  getCurrentSalary() {
+    return this.get("/salary/current");
+  }
   updateAllocation(id, allocation) {
     return this.put(`/salary/${id}/allocation`, { allocation });
   }
