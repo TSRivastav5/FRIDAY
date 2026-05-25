@@ -127,6 +127,9 @@ class FridayAPI {
   updateInvestment(id, data) {
     return this.put(`/investments/${id}`, data);
   }
+  clearAllInvestments() {
+    return this.del("/investments/clear/all-assets");
+  }
 
   // AI
   chatWithFriday(message) {

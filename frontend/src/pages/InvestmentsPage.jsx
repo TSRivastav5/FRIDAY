@@ -18,54 +18,39 @@ export const InvestmentsPage = () => {
     store.fetchInvestments?.();
   }, []);
 
-  const stats = store.portfolioStats || { totalInvested: 340000, totalValue: 412000, gainPercent: 12.4, gain: 72000 };
+  const stats = store.portfolioStats || { totalInvested: 0, currentValue: 0, totalGain: 0, gainPercent: 0 };
   const databaseInvestments = store.investments || [];
 
-  // Default holdings as shown in the Stitch mockup if none are in store
-  const defaultHoldings = [
-    { id: 'h1', name: 'Axis Bluechip Fund', type: 'Equity', amount: 120000, currentValue: 132450, subType: 'Direct • Equity', colorBg: 'bg-blue-100', colorText: 'text-blue-600', icon: 'account_balance_wallet' },
-    { id: 'h2', name: 'Parag Parikh Flexi Cap', type: 'Hybrid', amount: 90000, currentValue: 98200, subType: 'Growth • Hybrid', colorBg: 'bg-purple-100', colorText: 'text-purple-600', icon: 'trending_up' },
-    { id: 'h3', name: 'Mirae Asset Emerging Blue', type: 'Equity', amount: 50000, currentValue: 48850, subType: 'Mid Cap • Equity', colorBg: 'bg-orange-100', colorText: 'text-orange-600', icon: 'pie_chart' },
-    { id: 'h4', name: 'SBI Liquid Fund', type: 'Cash', amount: 80000, currentValue: 82500, subType: 'Debt • Cash', colorBg: 'bg-green-100', colorText: 'text-green-600', icon: 'payments' }
-  ];
+  // Map investments from database/store
+  const holdings = databaseInvestments.map((inv, idx) => {
+    const gain = inv.currentValue - inv.amount;
+    const gPercent = inv.amount > 0 ? (gain / inv.amount) * 100 : 0;
+    const colors = [
+      { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'account_balance_wallet' },
+      { bg: 'bg-purple-100', text: 'text-purple-600', icon: 'trending_up' },
+      { bg: 'bg-orange-100', text: 'text-orange-600', icon: 'pie_chart' },
+      { bg: 'bg-green-100', text: 'text-green-600', icon: 'payments' }
+    ];
+    const style = colors[idx % colors.length];
+    return {
+      id: inv._id || inv.id,
+      name: inv.name,
+      type: inv.type,
+      amount: inv.amount,
+      currentValue: inv.currentValue,
+      subType: `Direct • ${inv.type}`,
+      colorBg: style.bg,
+      colorText: style.text,
+      icon: style.icon,
+      gain,
+      gainPercent: gPercent
+    };
+  });
 
-  // If there are user-created investments in the store, map them to holdings format
-  const holdings = databaseInvestments.length > 0 
-    ? databaseInvestments.map((inv, idx) => {
-        const gain = inv.currentValue - inv.amount;
-        const gPercent = inv.amount > 0 ? (gain / inv.amount) * 100 : 0;
-        const colors = [
-          { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'account_balance_wallet' },
-          { bg: 'bg-purple-100', text: 'text-purple-600', icon: 'trending_up' },
-          { bg: 'bg-orange-100', text: 'text-orange-600', icon: 'pie_chart' },
-          { bg: 'bg-green-100', text: 'text-green-600', icon: 'payments' }
-        ];
-        const style = colors[idx % colors.length];
-        return {
-          id: inv._id || inv.id,
-          name: inv.name,
-          type: inv.type,
-          amount: inv.amount,
-          currentValue: inv.currentValue,
-          subType: `Direct • ${inv.type}`,
-          colorBg: style.bg,
-          colorText: style.text,
-          icon: style.icon,
-          gain,
-          gainPercent: gPercent
-        };
-      })
-    : defaultHoldings;
-
-  // Recalculate totals if using database investments
-  const totalValue = databaseInvestments.length > 0 
-    ? holdings.reduce((sum, h) => sum + h.currentValue, 0)
-    : stats.totalValue;
-  const totalInvested = databaseInvestments.length > 0
-    ? holdings.reduce((sum, h) => sum + h.amount, 0)
-    : stats.totalInvested;
-  const totalGains = totalValue - totalInvested;
-  const gainPercent = totalInvested > 0 ? (totalGains / totalInvested) * 100 : 12.4;
+  const totalValue = stats.currentValue ?? 0;
+  const totalInvested = stats.totalInvested ?? 0;
+  const totalGains = stats.totalGain ?? (totalValue - totalInvested);
+  const gainPercent = parseFloat(stats.gainPercent || 0);
 
   const handleAddHolding = async () => {
     if (formData.name && formData.amount) {
@@ -198,15 +183,35 @@ export const InvestmentsPage = () => {
 
         {/* Holdings List */}
         <section className="px-5 mt-6 text-left">
-          <div className="flex justify-between items-end mb-4">
+          <div className="flex justify-between items-center mb-4">
             <h3 className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">YOUR HOLDINGS</h3>
-            <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors">filter_list</span>
+            <div className="flex items-center gap-3">
+              {holdings.length > 0 && (
+                <button
+                  onClick={async () => {
+                    if (window.confirm("Are you sure you want to clear/delete all your investments? This will reset your portfolio to ₹0.")) {
+                      await store.clearAllInvestments();
+                    }
+                  }}
+                  className="text-[10px] font-bold text-error uppercase tracking-wider hover:underline flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-xs">restart_alt</span>
+                  Reset Portfolio
+                </button>
+              )}
+              <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors">filter_list</span>
+            </div>
           </div>
           <div className="flex flex-col gap-3">
-            {holdings.map((h) => {
-              const gain = h.gain ?? (h.currentValue - h.amount);
-              const gPercent = h.gainPercent ?? (h.amount > 0 ? (gain / h.amount) * 100 : 0);
-              const isPositive = gain >= 0;
+            {holdings.length === 0 ? (
+              <div className="text-center py-8 text-on-surface-variant text-xs uppercase tracking-widest font-semibold bg-surface-container-lowest border-[0.5px] border-outline-variant/30 rounded-xl">
+                No investments tracked · Click Add Asset to start
+              </div>
+            ) : (
+              holdings.map((h) => {
+                const gain = h.gain ?? (h.currentValue - h.amount);
+                const gPercent = h.gainPercent ?? (h.amount > 0 ? (gain / h.amount) * 100 : 0);
+                const isPositive = gain >= 0;
 
               return (
                 <div key={h.id} className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 transition-transform active:scale-[0.99] hover:shadow-sm">
@@ -241,7 +246,7 @@ export const InvestmentsPage = () => {
                   </div>
                 </div>
               );
-            })}
+            }))}
           </div>
         </section>
 

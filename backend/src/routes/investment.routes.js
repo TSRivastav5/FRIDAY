@@ -62,6 +62,19 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// Clear all investments (soft delete all for user)
+router.delete("/clear/all-assets", async (req, res) => {
+  try {
+    await Investment.updateMany(
+      { userId: req.user.id, isActive: true },
+      { isActive: false }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete (soft delete)
 router.delete("/:id", async (req, res) => {
   try {

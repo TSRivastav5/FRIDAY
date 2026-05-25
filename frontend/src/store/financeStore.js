@@ -192,6 +192,21 @@ export const useFinanceStore = create(
         }
       },
 
+      clearAllInvestments: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await fridayAPI.clearAllInvestments();
+          set({ 
+            investments: [], 
+            portfolioStats: { totalInvested: 0, currentValue: 0, totalGain: 0, gainPercent: 0 },
+            isLoading: false 
+          });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
       // AI Chat
       chatWithFriday: async (message) => {
         set({ isChatLoading: true });
