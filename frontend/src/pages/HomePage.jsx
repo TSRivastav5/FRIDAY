@@ -1,8 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
-import { SalaryModal } from '../components/SalaryModal';
 
 export const HomePage = () => {
   const store = useFinanceStore();
@@ -18,8 +16,33 @@ export const HomePage = () => {
   
   const totalAllocated = emi + sip + rent + travel + bills;
   const availableBalance = totalSalary - totalAllocated;
-  
-  const showSalaryModal = store.showSalaryModal || false;
+
+  // Local state for the Salary Credited button simulation
+  const [creditStatus, setCreditStatus] = useState('idle'); // 'idle' | 'processing' | 'credited'
+
+  const handleCreditSalary = async () => {
+    if (creditStatus !== 'idle') return;
+    
+    setCreditStatus('processing');
+    
+    try {
+      // Credit 85k salary in the background database
+      await store.creditSalary(85000);
+      
+      // Simulate processing time for smooth micro-interaction
+      setTimeout(() => {
+        setCreditStatus('credited');
+        
+        // Reset status back to idle after 3 seconds so it can be clicked again
+        setTimeout(() => {
+          setCreditStatus('idle');
+        }, 3000);
+      }, 1200);
+    } catch (err) {
+      console.error("Failed to credit salary:", err);
+      setCreditStatus('idle');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body antialiased flex flex-col pb-32">
@@ -127,22 +150,36 @@ export const HomePage = () => {
 
         {/* Action Button */}
         <div className="mt-6 mb-8">
-          <button 
-            onClick={() => store.setSalaryModal(true)} 
-            className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-lg shadow-primary-container/20"
-          >
-            <span className="material-symbols-outlined">account_balance_wallet</span>
-            <span className="text-lg">Salary credited</span>
-          </button>
+          {creditStatus === 'idle' && (
+            <button 
+              onClick={handleCreditSalary}
+              className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-lg shadow-primary-container/20"
+            >
+              <span className="material-symbols-outlined">account_balance_wallet</span>
+              <span className="text-lg">Salary credited</span>
+            </button>
+          )}
+
+          {creditStatus === 'processing' && (
+            <button 
+              className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 cursor-not-allowed opacity-90"
+              disabled
+            >
+              <span className="animate-spin material-symbols-outlined">autorenew</span>
+              <span className="text-lg">Processing...</span>
+            </button>
+          )}
+
+          {creditStatus === 'credited' && (
+            <button 
+              className="w-full bg-tertiary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 cursor-default"
+            >
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              <span className="text-lg">Credited!</span>
+            </button>
+          )}
         </div>
       </main>
-
-      <SalaryModal
-        isOpen={showSalaryModal}
-        onClose={() => store.setSalaryModal(false)}
-        onSubmit={store.updateAllocation}
-        currentAllocation={store.currentAllocation || { salary: totalSalary, emi, rent, travel, sip, bills }}
-      />
     </div>
   );
 };
