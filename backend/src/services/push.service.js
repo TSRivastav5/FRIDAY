@@ -2,8 +2,14 @@ import webpush from "web-push";
 import User from "../models/User.js";
 
 // Initialize VAPID credentials once on import
+// Auto-prepend mailto: if the env var was set as a bare email address
+const rawEmail = process.env.VAPID_EMAIL || "admin@finvault.app";
+const vapidSubject = rawEmail.startsWith("mailto:") || rawEmail.startsWith("https://")
+  ? rawEmail
+  : `mailto:${rawEmail}`;
+
 webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || "mailto:admin@finvault.app",
+  vapidSubject,
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
