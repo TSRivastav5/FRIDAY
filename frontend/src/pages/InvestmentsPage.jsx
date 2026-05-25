@@ -1,265 +1,263 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency, generateId } from '../utils/helpers';
-import { investmentTypes } from '../data/mockData';
 
 export const InvestmentsPage = () => {
   const store = useFinanceStore();
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'SIP',
+    type: 'Equity',
     amount: '',
     currentValue: '',
   });
 
-  const stats = store.portfolioStats || { totalInvested: 0, totalValue: 0, gainPercent: 0, gain: 0 };
-  const investments = store.investments || [];
+  useEffect(() => {
+    // Fetch investments on mount
+    store.fetchInvestments?.();
+  }, []);
 
-  const handleAddInvestment = () => {
+  const stats = store.portfolioStats || { totalInvested: 340000, totalValue: 412000, gainPercent: 12.4, gain: 72000 };
+  const databaseInvestments = store.investments || [];
+
+  // Default holdings as shown in the Stitch mockup if none are in store
+  const defaultHoldings = [
+    { id: 'h1', name: 'Axis Bluechip Fund', type: 'Equity', amount: 120000, currentValue: 132450, subType: 'Direct • Equity', colorBg: 'bg-blue-100', colorText: 'text-blue-600', icon: 'account_balance_wallet' },
+    { id: 'h2', name: 'Parag Parikh Flexi Cap', type: 'Hybrid', amount: 90000, currentValue: 98200, subType: 'Growth • Hybrid', colorBg: 'bg-purple-100', colorText: 'text-purple-600', icon: 'trending_up' },
+    { id: 'h3', name: 'Mirae Asset Emerging Blue', type: 'Equity', amount: 50000, currentValue: 48850, subType: 'Mid Cap • Equity', colorBg: 'bg-orange-100', colorText: 'text-orange-600', icon: 'pie_chart' },
+    { id: 'h4', name: 'SBI Liquid Fund', type: 'Cash', amount: 80000, currentValue: 82500, subType: 'Debt • Cash', colorBg: 'bg-green-100', colorText: 'text-green-600', icon: 'payments' }
+  ];
+
+  // If there are user-created investments in the store, map them to holdings format
+  const holdings = databaseInvestments.length > 0 
+    ? databaseInvestments.map((inv, idx) => {
+        const gain = inv.currentValue - inv.amount;
+        const gPercent = inv.amount > 0 ? (gain / inv.amount) * 100 : 0;
+        const colors = [
+          { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'account_balance_wallet' },
+          { bg: 'bg-purple-100', text: 'text-purple-600', icon: 'trending_up' },
+          { bg: 'bg-orange-100', text: 'text-orange-600', icon: 'pie_chart' },
+          { bg: 'bg-green-100', text: 'text-green-600', icon: 'payments' }
+        ];
+        const style = colors[idx % colors.length];
+        return {
+          id: inv._id || inv.id,
+          name: inv.name,
+          type: inv.type,
+          amount: inv.amount,
+          currentValue: inv.currentValue,
+          subType: `Direct • ${inv.type}`,
+          colorBg: style.bg,
+          colorText: style.text,
+          icon: style.icon,
+          gain,
+          gainPercent: gPercent
+        };
+      })
+    : defaultHoldings;
+
+  // Recalculate totals if using database investments
+  const totalValue = databaseInvestments.length > 0 
+    ? holdings.reduce((sum, h) => sum + h.currentValue, 0)
+    : stats.totalValue;
+  const totalInvested = databaseInvestments.length > 0
+    ? holdings.reduce((sum, h) => sum + h.amount, 0)
+    : stats.totalInvested;
+  const totalGains = totalValue - totalInvested;
+  const gainPercent = totalInvested > 0 ? (totalGains / totalInvested) * 100 : 12.4;
+
+  const handleAddHolding = async () => {
     if (formData.name && formData.amount) {
-      store.addInvestment({
-        id: generateId(),
-        ...formData,
-        amount: parseInt(formData.amount),
-        currentValue: parseInt(formData.currentValue) || parseInt(formData.amount),
-        date: new Date().toISOString().split('T')[0],
-      });
-      setFormData({ name: '', type: 'SIP', amount: '', currentValue: '' });
-      setShowForm(false);
+      const amt = parseInt(formData.amount);
+      const curr = parseInt(formData.currentValue) || amt;
+      try {
+        await store.addInvestment({
+          name: formData.name,
+          type: formData.type,
+          amount: amt,
+          currentValue: curr,
+        });
+        setFormData({ name: '', type: 'Equity', amount: '', currentValue: '' });
+        setShowForm(false);
+      } catch (e) {
+        console.error("Error adding holding:", e);
+      }
     }
   };
 
-  const getTypeIcon = (type) => {
-    const t = investmentTypes.find(i => i.id === type);
-    return t ? t.icon : 'layers';
-  };
-
-  const getStyleForIndex = (index) => {
-    const colors = ['primary', 'secondary', 'tertiary'];
-    return colors[index % colors.length];
-  };
-
   return (
-    <main className="max-w-6xl mx-auto pt-24 px-6 pb-32">
-      {/* AI Intelligence Layer */}
-      <header className="flex flex-col items-center mb-16 text-center">
-        <div className="w-20 h-20 mb-6 relative">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/20 animate-orbit border-dashed"></div>
-          <div className="absolute inset-2 rounded-full border border-secondary/40 animate-spin" style={{animationDirection: "reverse", animationDuration: "10s"}}></div>
-          <div className="absolute inset-4 rounded-full bg-primary/10 backdrop-blur-sm flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary text-3xl" style={{fontVariationSettings: "'FILL' 1"}}>hub</span>
+    <div className="bg-surface text-on-surface min-h-screen flex flex-col items-center pb-32">
+      {/* Top App Bar Component */}
+      <header className="bg-inverse-surface w-full z-40 fixed top-0 left-0">
+        <div className="flex justify-between items-center w-full px-5 py-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed-dim border border-outline-variant/20">
+              <img 
+                alt="Profile picture" 
+                className="w-full h-full object-cover scale-110" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCX0xxkFY5XGvL5V1FBPkkAaob4937P2y3M3RJ9DbQw74sTgyAIlMOn1k20oEXYFkIg2PYiGAuiJWdIDYV6Ck-Q-3JwGIPTdzuFxNQE3FJsVTZQSpdtf_OhiVn352t4iBrRsH7I0bOnJxjE0JQNJKikbRdAvqj4cBomb0_BJQmvg6pvu415tFBoXMifvBPFv5WMN6jc-cTXO9KDF3xcRnOuU1vINj9JwAMNSbisVTYlFURbT4qm8vB-iBCV4AnXkE0RVr8VW-hoJ0"
+              />
+            </div>
+            <h1 className="text-lg font-bold text-on-primary text-left">FinVault</h1>
           </div>
+          <button className="text-on-primary opacity-70 hover:opacity-100 transition-all">
+            <span className="material-symbols-outlined">notifications</span>
+          </button>
         </div>
-        <h1 className="font-headline text-4xl md:text-6xl font-light tracking-tighter text-on-surface mb-2">
-          {formatCurrency(stats.totalValue)}
-        </h1>
-        <div className="flex items-center gap-2 text-primary-fixed font-headline tracking-widest text-sm bg-primary/5 px-4 py-1 rounded-full border border-primary/20">
-          <span className="material-symbols-outlined text-xs">trending_up</span>
-          <span>{stats.gain >= 0 ? '+' : ''}{stats.gainPercent.toFixed(1)}% PERFORMANCE CYCLE</span>
-        </div>
-        <p className="mt-8 font-label text-secondary-dim text-sm tracking-widest uppercase">
-          AI CORE: <span className="text-on-surface">"Optimizing investment allocation."</span>
-        </p>
       </header>
 
-      {/* Add Form Trigger */}
-      <div className="text-right mb-6">
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary font-headline text-xs tracking-widest uppercase hover:bg-primary/20 transition-all shadow-[0_0_15px_rgba(129,236,255,0.15)]">
-          {showForm ? 'Cancel Entry' : '+ Add Asset'}
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            className="glass-panel rounded-2xl p-6 mb-8 border border-secondary/30 grid grid-cols-1 md:grid-cols-2 gap-4"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-          >
-            <input
-              type="text"
-              placeholder="Investment Name"
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface-variant/40 border border-outline-variant/30 rounded-xl text-on-surface focus:outline-none focus:border-primary"
-            />
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface-variant/40 border border-outline-variant/30 rounded-xl text-on-surface focus:outline-none focus:border-primary"
-            >
-              {investmentTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              placeholder="Amount Invested"
-              value={formData.amount}
-              onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface-variant/40 border border-outline-variant/30 rounded-xl text-on-surface focus:outline-none focus:border-primary"
-            />
-            <input
-              type="number"
-              placeholder="Current Value (optional)"
-              value={formData.currentValue}
-              onChange={(e) => setFormData((prev) => ({ ...prev, currentValue: e.target.value }))}
-              className="w-full px-4 py-3 bg-surface-variant/40 border border-outline-variant/30 rounded-xl text-on-surface focus:outline-none focus:border-primary"
-            />
-            <div className="md:col-span-2 text-right">
-              <button onClick={handleAddInvestment} className="px-6 py-3 bg-primary text-surface-lowest font-bold rounded-xl hover:scale-105 transition-transform shadow-[0_0_20px_rgba(129,236,255,0.4)]">
-                Deploy Capital
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Portfolio Visualization (Chart) */}
-        <div className="md:col-span-8 glass-panel rounded-xl p-8 relative overflow-hidden h-[400px]">
-          <div className="absolute top-4 left-6 z-10">
-            <h2 className="font-headline text-xs tracking-[0.2em] text-outline uppercase mb-1">Growth Telemetry</h2>
-            <div className="text-2xl font-headline text-on-surface">Dynamic Yield Curve</div>
-            <div className="text-xs text-primary mt-1 pr-6 drop-shadow-[0_0_5px_#81ecff]">
-              Total Invested: {formatCurrency(stats.totalInvested)}
+      <main className="w-full max-w-md bg-surface min-h-screen pt-[72px] pb-32 flex flex-col items-stretch">
+        {/* Portfolio Header Section */}
+        <section className="bg-inverse-surface px-5 pt-6 pb-12 rounded-b-[40px] text-left">
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-semibold tracking-wider text-on-primary-fixed opacity-60">PORTFOLIO TOTAL</p>
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-4xl font-bold text-on-primary">{formatCurrency(totalValue)}</h2>
+              <span className="flex items-center text-tertiary-fixed text-sm font-semibold">
+                <span className="material-symbols-outlined text-[16px] mr-1">trending_up</span>
+                {gainPercent >= 0 ? '+' : ''}{gainPercent.toFixed(1)}%
+              </span>
             </div>
           </div>
-          
-          {/* SVG Chart Mockup */}
-          <div className="absolute inset-0 flex items-end px-0 pointer-events-none">
-            <svg className="w-full h-full opacity-60" viewBox="0 0 1000 400" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" style={{stopColor:"rgba(129, 236, 255, 0.4)", stopOpacity:0.3}}></stop>
-                  <stop offset="100%" style={{stopColor:"rgba(129, 236, 255, 0)", stopOpacity:0}}></stop>
-                </linearGradient>
-              </defs>
-              <path d="M0,350 Q100,320 200,330 T400,280 T600,250 T800,180 T1000,120 L1000,400 L0,400 Z" fill="url(#chartGradient)"></path>
-              <path className="neon-text-cyan" d="M0,350 Q100,320 200,330 T400,280 T600,250 T800,180 T1000,120" fill="none" stroke="#81ecff" strokeLinecap="round" strokeWidth="3"></path>
-              <circle cx="1000" cy="120" fill="#81ecff" r="4"></circle>
-              <circle className="animate-pulse" cx="1000" cy="120" fill="none" r="10" stroke="#81ecff" strokeWidth="1"></circle>
-            </svg>
+          {/* Horizontal Quick Stats */}
+          <div className="flex gap-4 mt-8 overflow-x-auto no-scrollbar">
+            <div className="min-w-[140px] bg-white/10 p-4 rounded-xl border border-white/5 text-left">
+              <p className="text-[11px] font-semibold text-on-primary opacity-50 mb-1">INVESTED</p>
+              <p className="text-base font-bold text-on-primary">{formatCurrency(totalInvested)}</p>
+            </div>
+            <div className="min-w-[140px] bg-white/10 p-4 rounded-xl border border-white/5 text-left">
+              <p className="text-[11px] font-semibold text-on-primary opacity-50 mb-1">TOTAL GAINS</p>
+              <p className="text-base font-bold text-tertiary-fixed">{totalGains >= 0 ? '+' : ''}{formatCurrency(totalGains)}</p>
+            </div>
+            <div className="min-w-[140px] bg-white/10 p-4 rounded-xl border border-white/5 text-left">
+              <p className="text-[11px] font-semibold text-on-primary opacity-50 mb-1">ACTIVE ASSETS</p>
+              <p className="text-base font-bold text-on-primary">{holdings.length} Funds</p>
+            </div>
           </div>
-          
-          {/* HUD Overlays */}
-          <div className="absolute bottom-6 left-6 grid grid-cols-3 gap-8 pointer-events-none">
-            <div>
-              <div className="text-[10px] text-outline font-label tracking-widest mb-1">VOLATILITY</div>
-              <div className="text-on-surface font-headline">0.42%</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-outline font-label tracking-widest mb-1">SHARPE</div>
-              <div className="text-on-surface font-headline">3.18</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-outline font-label tracking-widest mb-1">BETA</div>
-              <div className="text-on-surface font-headline">0.84</div>
-            </div>
+        </section>
+
+        {/* Insights Banner */}
+        <div className="px-5 -mt-6">
+          <div className="bg-primary-container p-4 rounded-2xl flex items-start gap-3 shadow-lg text-left">
+            <span className="material-symbols-outlined text-on-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+            <p className="text-xs text-on-primary-container leading-relaxed">
+              Your <span className="font-bold">Axis Bluechip</span> fund is outperforming 85% of your portfolio this quarter. Consider rebalancing.
+            </p>
           </div>
         </div>
 
-        {/* Asset Allocation Cards */}
-        <div className="md:col-span-4 flex flex-col gap-4">
-          {investments.length === 0 ? (
-            <div className="glass-panel p-6 rounded-xl flex items-center justify-center h-full text-outline font-label uppercase tracking-widest text-sm text-center">
-              No Asset Data Found
-            </div>
-          ) : (
-            investments.slice(0, 3).map((inv, idx) => {
-              const theme = getStyleForIndex(idx);
-              const gain = inv.currentValue - inv.amount;
-              const gPercent = inv.amount > 0 ? (gain / inv.amount) * 100 : 0;
+        {/* Form Container */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              className="mx-5 mt-6 bg-white p-5 rounded-2xl border-[0.5px] border-outline-variant/30 space-y-4 text-left shadow-md"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <h3 className="font-bold text-sm text-on-surface tracking-wider uppercase mb-2">Add New Investment</h3>
+              <input
+                type="text"
+                placeholder="Asset Name (e.g. Axis Bluechip)"
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-2 border border-outline-variant/30 rounded-xl focus:outline-none focus:border-primary text-sm bg-background"
+              />
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
+                className="w-full px-4 py-2 border border-outline-variant/30 rounded-xl focus:outline-none focus:border-primary text-sm bg-background"
+              >
+                <option value="Equity">Equity</option>
+                <option value="Debt">Debt</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Cash">Cash</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Invested Amount"
+                value={formData.amount}
+                onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
+                className="w-full px-4 py-2 border border-outline-variant/30 rounded-xl focus:outline-none focus:border-primary text-sm bg-background"
+              />
+              <input
+                type="number"
+                placeholder="Current Value"
+                value={formData.currentValue}
+                onChange={(e) => setFormData((prev) => ({ ...prev, currentValue: e.target.value }))}
+                className="w-full px-4 py-2 border border-outline-variant/30 rounded-xl focus:outline-none focus:border-primary text-sm bg-background"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => setShowForm(false)} className="flex-1 py-2 text-xs font-semibold border border-outline-variant/30 rounded-xl hover:bg-surface-container transition-colors">Cancel</button>
+                <button onClick={handleAddHolding} className="flex-1 py-2 text-xs font-bold bg-primary text-white rounded-xl hover:opacity-90 transition-opacity">Add</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Holdings List */}
+        <section className="px-5 mt-6 text-left">
+          <div className="flex justify-between items-end mb-4">
+            <h3 className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">YOUR HOLDINGS</h3>
+            <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors">filter_list</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {holdings.map((h) => {
+              const gain = h.gain ?? (h.currentValue - h.amount);
+              const gPercent = h.gainPercent ?? (h.amount > 0 ? (gain / h.amount) * 100 : 0);
+              const isPositive = gain >= 0;
+
               return (
-                <div key={inv.id || idx} className={`glass-panel rounded-xl p-5 group hover:border-${theme}/40 transition-all cursor-pointer`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`p-2 rounded-lg bg-${theme}/10 text-${theme}`}>
-                      <span className="material-symbols-outlined whitespace-nowrap overflow-hidden">monitoring</span>
+                <div key={h.id} className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 transition-transform active:scale-[0.99] hover:shadow-sm">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 ${h.colorBg || 'bg-blue-100'} rounded-lg flex items-center justify-center`}>
+                        <span className={`material-symbols-outlined ${h.colorText || 'text-blue-600'}`}>{h.icon || 'account_balance_wallet'}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-on-surface">{h.name}</p>
+                        <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">{h.subType || `Direct • ${h.type}`}</p>
+                      </div>
                     </div>
-                    <span className={`font-headline text-[10px] tracking-widest text-${theme} bg-${theme}/10 px-2 py-0.5 rounded truncate max-w-[100px]`}>
-                      {inv.type}
-                    </span>
+                    <div className="text-right">
+                      <p className={`text-sm font-bold ${isPositive ? 'text-tertiary' : 'text-error'}`}>
+                        {isPositive ? '+' : ''}{formatCurrency(gain)}
+                      </p>
+                      <p className={`text-[11px] font-semibold ${isPositive ? 'text-tertiary' : 'text-error'}`}>
+                        {gPercent.toFixed(1)}% {isPositive ? '↑' : '↓'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-on-surface font-headline text-xl mb-1">{formatCurrency(inv.currentValue)}</div>
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-outline truncate mr-2">{inv.name}</span>
-                    <span className={`text-xs ${gain >= 0 ? `text-${theme}-fixed drop-shadow-[0_0_3px_currentColor]` : 'text-error'}`}>
-                      {gain >= 0 ? '+' : ''}{gPercent.toFixed(1)}%
-                    </span>
+                  <div className="flex justify-between items-center pt-3 border-t border-outline-variant/30">
+                    <div>
+                      <p className="text-[11px] font-semibold text-outline uppercase tracking-wider">INVESTED</p>
+                      <p className="text-xs font-semibold">{formatCurrency(h.amount)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] font-semibold text-outline uppercase tracking-wider">CURRENT</p>
+                      <p className="text-xs font-semibold">{formatCurrency(h.currentValue)}</p>
+                    </div>
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
-      </div>
+            })}
+          </div>
+        </section>
 
-      {/* Asymmetric Detail Section */}
-      <section className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="relative">
-          <div className="absolute -top-12 -left-12 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
-          <h3 className="font-headline text-2xl tracking-tight text-on-surface mb-6">Execution Logs</h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low border-l-2 border-primary">
-              <span className="material-symbols-outlined text-primary">auto_graph</span>
-              <div>
-                <div className="text-sm font-headline text-on-surface">Auto-Rebalance Executed</div>
-                <div className="text-[10px] text-outline font-label uppercase">TS: 08:22:14 UTC // 4 assets shifted</div>
-              </div>
-              <span className="ml-auto text-xs text-primary-fixed drop-shadow-[0_0_3px_#00e3fd]">SUCCESS</span>
-            </div>
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-container-low border-l-2 border-secondary/40">
-              <span className="material-symbols-outlined text-secondary">shield_with_heart</span>
-              <div>
-                <div className="text-sm font-headline text-on-surface">Risk Threshold Secured</div>
-                <div className="text-[10px] text-outline font-label uppercase">Drawdown capped at 2.5%</div>
-              </div>
-              <span className="ml-auto text-xs text-outline">STABLE</span>
-            </div>
+        {/* CTA Action Bar (Floating above nav) */}
+        <div className="fixed bottom-24 left-0 w-full px-5 z-30 pointer-events-none">
+          <div className="max-w-md mx-auto pointer-events-auto">
+            <button 
+              onClick={() => setShowForm(!showForm)} 
+              className="w-full bg-primary-container text-on-primary font-bold py-4 rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:brightness-110"
+            >
+              <span className="material-symbols-outlined">add_circle</span>
+              Add Asset
+            </button>
           </div>
         </div>
-
-        <div className="glass-panel p-8 rounded-2xl relative">
-          <div className="absolute top-0 right-0 p-2 overflow-hidden">
-            <div className="w-12 h-12 border-t border-r border-primary/30 rounded-tr-xl"></div>
-          </div>
-          <h3 className="font-headline text-xl text-on-surface mb-4">Capital Health Index</h3>
-          <div className="flex items-center gap-8">
-            <div className="relative w-32 h-32 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full rotate-[-90deg]">
-                <circle className="text-surface-variant" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" strokeWidth="8"></circle>
-                <circle className="text-primary" style={{filter: "drop-shadow(0 0 5px #81ecff)"}} cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" strokeDasharray="364.4" strokeDashoffset="91.1" strokeWidth="8"></circle>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-headline text-2xl text-on-surface">75%</span>
-                <span className="text-[8px] text-outline uppercase font-label">Optimum</span>
-              </div>
-            </div>
-            <div className="flex-1 space-y-3">
-              <div className="flex justify-between text-xs">
-                <span className="text-outline">Liquidity</span>
-                <span className="text-on-surface">88%</span>
-              </div>
-              <div className="w-full h-1 bg-surface-variant rounded-full overflow-hidden">
-                <div className="w-[88%] h-full bg-primary"></div>
-              </div>
-              <div className="flex justify-between text-xs pt-2">
-                <span className="text-outline">Tax Efficiency</span>
-                <span className="text-on-surface">94%</span>
-              </div>
-              <div className="w-full h-1 bg-surface-variant rounded-full overflow-hidden">
-                <div className="w-[94%] h-full bg-secondary"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 };

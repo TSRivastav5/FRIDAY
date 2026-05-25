@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#85f8c4",
+                    "on-secondary-container": "#5f6270",
+                    "surface-container-highest": "#dce1ff",
+                    "on-surface-variant": "#434656",
+                    "surface-tint": "#004cec",
+                    "secondary-container": "#dcdfef",
+                    "tertiary": "#005b3e",
+                    "on-primary-container": "#e1e4ff",
+                    "on-primary-fixed-variant": "#0039b5",
+                    "outline-variant": "#c3c5d8",
+                    "inverse-primary": "#b7c4ff",
+                    "on-tertiary-container": "#89fcc7",
+                    "surface-dim": "#d2d8fb",
+                    "on-secondary-fixed": "#171b27",
+                    "primary-fixed-dim": "#b7c4ff",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#001551",
+                    "background": "#faf8ff",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#1a56f5",
+                    "surface": "#faf8ff",
+                    "surface-container-high": "#e4e7ff",
+                    "primary": "#003fc8",
+                    "on-background": "#131a34",
+                    "outline": "#737687",
+                    "surface-variant": "#dce1ff",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed": "#002114",
+                    "tertiary-fixed-dim": "#68dba9",
+                    "surface-container": "#ebedff",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed": "#dfe2f2",
+                    "on-secondary-fixed-variant": "#434353",
+                    "tertiary-container": "#007652",
+                    "on-secondary": "#ffffff",
+                    "on-surface": "#131a34",
+                    "secondary-fixed-dim": "#c3c6d6",
+                    "inverse-surface": "#282f4a",
+                    "on-error": "#ffffff",
+                    "secondary": "#5a5e6c",
+                    "surface-container-low": "#f3f2ff",
+                    "inverse-on-surface": "#eff0ff",
+                    "on-tertiary-fixed-variant": "#005137",
+                    "on-primary": "#ffffff",
+                    "primary-fixed": "#dce1ff",
+                    "surface-bright": "#faf8ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-default": "16px",
+                    "stack-compact": "8px",
+                    "container-margin": "20px",
+                    "section-gap": "24px",
+                    "gutter": "12px"
+            },
+            "fontFamily": {
+                    "body-sm": ["Manrope"],
+                    "label-caps": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "headline-lg": ["Manrope"],
+                    "headline-sm": ["Manrope"],
+                    "amount-lg": ["Manrope"],
+                    "amount-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"]
+            },
+            "fontSize": {
+                    "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["11px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "headline-lg": ["34px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "amount-lg": ["34px", {"lineHeight": "1", "letterSpacing": "-0.5px", "fontWeight": "500"}],
+                    "amount-md": ["18px", {"lineHeight": "1", "letterSpacing": "-0.5px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "1.2", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            background-color: #faf8ff;
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center">
+<!-- App Shell Container -->
+<main class="w-full max-w-md min-h-screen bg-surface-bright shadow-2xl relative flex flex-col pb-24 overflow-hidden">
+<!-- Header Section (Dark Navy) -->
+<header class="bg-inverse-surface pt-12 pb-16 px-container-margin rounded-b-[40px] text-on-primary relative z-10">
+<div class="flex items-center gap-4 mb-8">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm">May salary</h1>
+</div>
+<div class="space-y-2">
+<p class="font-label-caps text-label-caps text-on-primary/60 uppercase">Credited amount</p>
+<div class="flex items-baseline">
+<span class="font-amount-lg text-amount-lg text-on-primary">₹85,000</span>
+</div>
+<div class="flex items-center gap-2 mt-2">
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed filled-icon" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<p class="font-body-sm text-body-sm text-tertiary-fixed">Verified · HDFC Bank</p>
+</div>
+</div>
+</header>
+<!-- Main Content Area (Light Gray/White) -->
+<section class="flex-1 px-container-margin -mt-8 relative z-20">
+<!-- Section Title -->
+<div class="mb-4 flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Where it goes</h2>
+</div>
+<!-- Breakdown Card -->
+<div class="bg-surface-container-lowest rounded-xl border-[0.5px] border-outline-variant/30 shadow-sm overflow-hidden">
+<div class="p-stack-default space-y-5">
+<!-- Breakdown Rows -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="font-body-md text-body-md text-on-surface">Home loan EMI</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹12,000</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-orange-500"></div>
+<span class="font-body-md text-body-md text-on-surface">Car loan EMI</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹6,000</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-purple-500"></div>
+<span class="font-body-md text-body-md text-on-surface">Rent</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹12,000</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-tertiary"></div>
+<span class="font-body-md text-body-md text-on-surface">SIP investment</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹10,000</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="font-body-md text-body-md text-on-surface">Travel budget</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹6,000</span>
+</div>
+<div class="flex items-center justify-between pb-2">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<span class="font-body-md text-body-md text-on-surface">Bills + subscriptions</span>
+</div>
+<span class="font-amount-md text-amount-md text-on-surface">-₹3,500</span>
+</div>
+</div>
+<!-- Summary Footer (Green Pill) -->
+<div class="bg-tertiary-fixed/20 p-stack-default flex justify-between items-center border-t border-tertiary-fixed/30">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-tertiary uppercase">You keep</span>
+<span class="font-amount-md text-amount-md text-tertiary font-bold">₹35,500</span>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">account_balance_wallet</span>
+</div>
+</div>
+</div>
+<!-- AI Insight Chip -->
+<div class="mt-section-gap bg-primary-fixed/30 rounded-xl p-stack-default border border-primary-fixed/50 flex gap-4">
+<div class="mt-1">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<div class="flex-1">
+<p class="font-body-sm text-body-sm text-on-background leading-relaxed">
+                        Car loan ends in 2 months. Redirect <span class="font-bold text-primary">₹6,000</span> to liquid fund after that. Want me to set a reminder?
+                    </p>
+<button class="mt-2 text-primary font-label-caps text-label-caps flex items-center gap-1 group">
+                        VIEW RECOMMENDATION
+                        <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-inverse-surface px-4 pb-6 pt-3 z-50 flex justify-around items-center shadow-lg border-t border-outline-variant/10">
+<!-- Home -->
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant opacity-60 hover:opacity-100 transition-all duration-300">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-caps text-[10px] mt-1">Home</span>
+</button>
+<!-- Invest -->
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant opacity-60 hover:opacity-100 transition-all duration-300">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="font-label-caps text-[10px] mt-1">Invest</span>
+</button>
+<!-- Ask AI -->
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant opacity-60 hover:opacity-100 transition-all duration-300">
+<div class="relative">
+<span class="material-symbols-outlined">auto_awesome</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-primary-container rounded-full"></div>
+</div>
+<span class="font-label-caps text-[10px] mt-1">Ask AI</span>
+</button>
+<!-- History -->
+<button class="flex flex-col items-center justify-center text-on-primary scale-110 transition-transform tap-highlight-none">
+<span class="material-symbols-outlined filled-icon" style="font-variation-settings: 'FILL' 1;">history</span>
+<span class="font-label-caps text-[10px] mt-1">History</span>
+</button>
+<!-- Settings -->
+<button class="flex flex-col items-center justify-center text-on-secondary-fixed-variant opacity-60 hover:opacity-100 transition-all duration-300">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-caps text-[10px] mt-1">Settings</span>
+</button>
+</nav>
+</main>
+<script>
+        // Micro-interactions and subtle effects
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.style.transform = 'scale(0.96)';
+            });
+            button.addEventListener('mouseup', () => {
+                button.style.transform = 'scale(1)';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+
+        // Background subtle parallax effect on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            const scrolled = window.pageYOffset;
+            header.style.backgroundPositionY = scrolled * 0.2 + 'px';
+        });
+    </script>
+</body></html>

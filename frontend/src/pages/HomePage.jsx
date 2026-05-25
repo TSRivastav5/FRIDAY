@@ -6,132 +6,143 @@ import { SalaryModal } from '../components/SalaryModal';
 
 export const HomePage = () => {
   const store = useFinanceStore();
-  const userName = store.user?.name || "Boss";
-  const totalBalance = store.salary?.amount || 0;
+  const userName = store.user?.name || "Rahul";
+  
+  // Calculate dynamic values
+  const totalSalary = store.salary?.amount || 85000;
+  const emi = store.currentAllocation?.emi ?? 18000;
+  const sip = store.currentAllocation?.sip ?? 10000;
+  const rent = store.currentAllocation?.rent ?? 12000;
+  const travel = store.currentAllocation?.travel ?? 6000;
+  const bills = store.currentAllocation?.bills ?? 3500;
+  
+  const totalAllocated = emi + sip + rent + travel + bills;
+  const availableBalance = totalSalary - totalAllocated;
+  
   const showSalaryModal = store.showSalaryModal || false;
 
   return (
-    <main className="relative z-10 pt-32 pb-40 px-4 max-w-7xl mx-auto flex flex-col items-center">
-      <div className="relative w-full max-w-4xl flex flex-col items-center">
-        <div className="relative w-80 h-80 md:w-[450px] md:h-[450px] flex items-center justify-center mb-12">
-          <div className="absolute inset-0 rounded-full border-4 border-primary/20 shadow-[0_0_60px_rgba(129,236,255,0.15)]"></div>
-          <div className="absolute inset-4 rounded-full border border-primary/10 border-dashed animate-orbit"></div>
-          <div className="absolute inset-8 rounded-full border-[10px] border-primary/5"></div>
-          <svg className="absolute inset-0 w-full h-full -rotate-90 drop-shadow-[0_0_15px_rgba(129,236,255,0.4)]" viewBox="0 0 100 100">
-            <circle className="text-primary/10" cx="50" cy="50" fill="none" r="46" stroke="currentColor" strokeWidth="2"></circle>
-            <circle className="text-primary" cx="50" cy="50" fill="none" r="46" stroke="currentColor" strokeDasharray="210 289" strokeWidth="3"></circle>
-          </svg>
-          <div className="text-center z-20">
-            <p className="font-headline text-xs tracking-[0.3em] uppercase text-primary-dim mb-2">Total Capital Flow</p>
-            <h2 className="text-5xl md:text-7xl font-black text-primary font-headline tracking-tighter neon-text-cyan">
-              {formatCurrency(totalBalance)}
-            </h2>
-            <div className="mt-4 flex items-center justify-center gap-2 text-primary-fixed-dim">
-              <span className="material-symbols-outlined text-sm">trending_up</span>
-              <span className="font-label text-sm font-bold tracking-widest">+12.4% SYSTEM GROWTH</span>
+    <div className="min-h-screen bg-background text-on-background font-body antialiased flex flex-col pb-32">
+      {/* Top Navigation / Header */}
+      <header className="bg-inverse-surface text-on-primary docked full-width top-0 rounded-b-none z-50">
+        <div className="flex justify-between items-center w-full px-5 py-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-surface-container overflow-hidden border-2 border-primary-container">
+              <img 
+                alt="Profile picture" 
+                className="w-full h-full object-cover scale-110" 
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCX0xxkFY5XGvL5V1FBPkkAaob4937P2y3M3RJ9DbQw74sTgyAIlMOn1k20oEXYFkIg2PYiGAuiJWdIDYV6Ck-Q-3JwGIPTdzuFxNQE3FJsVTZQSpdtf_OhiVn352t4iBrRsH7I0bOnJxjE0JQNJKikbRdAvqj4cBomb0_BJQmvg6pvu415tFBoXMifvBPFv5WMN6jc-cTXO9KDF3xcRnOuU1vINj9JwAMNSbisVTYlFURbT4qm8vB-iBCV4AnXkE0RVr8VW-hoJ0"
+              />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-on-surface-variant opacity-70 text-[11px] font-semibold uppercase tracking-wider">Good morning,</span>
+              <span className="text-lg font-bold text-on-primary">{userName} 👋</span>
             </div>
           </div>
+          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-primary-container text-on-primary active:scale-95 transition-all">
+            <span className="material-symbols-outlined">notifications</span>
+          </button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-12">
-          <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
-            <div className="flex items-center justify-between mb-6">
-              <span className="font-label text-xs tracking-widest text-secondary uppercase font-bold">Monthly Salary Status</span>
-              <span className="material-symbols-outlined text-secondary">payments</span>
+      </header>
+
+      {/* Hero Balance Section */}
+      <section className="bg-inverse-surface px-5 pt-4 pb-12 rounded-b-[40px] shadow-sm text-left">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-on-surface-variant opacity-70 text-[11px] font-semibold uppercase tracking-wider mb-1">Available balance</p>
+          <div className="flex items-baseline gap-1 mb-2">
+            <span className="text-on-primary text-4xl font-semibold tracking-tighter">{formatCurrency(availableBalance)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-tertiary-fixed-dim">
+            <span className="material-symbols-outlined text-sm">trending_up</span>
+            <span className="text-xs">After all commitments</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content Grid */}
+      <main className="flex-grow px-5 -mt-6 max-w-7xl mx-auto w-full">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Card 1: EMI */}
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="w-8 h-8 rounded-lg bg-[#FFB038]/10 flex items-center justify-center mb-3 self-start">
+              <span className="material-symbols-outlined text-[#FFB038]">receipt_long</span>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-3xl font-headline font-bold text-on-surface">94%</p>
-                  <p className="text-[10px] text-on-surface-variant font-label tracking-wider uppercase">Allocated</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-headline font-semibold text-secondary">{formatCurrency(totalBalance)}</p>
-                  <p className="text-[10px] text-on-surface-variant font-label tracking-wider uppercase">Current Cycle</p>
-                </div>
-              </div>
-              <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                <div className="h-full bg-secondary w-[94%] shadow-[0_0_10px_rgba(172,138,255,0.5)]"></div>
-              </div>
+            <div className="text-left">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">EMI DUE</p>
+              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(emi)}</p>
+              <p className="text-xs text-[#FFB038]">Active commitments</p>
             </div>
           </div>
 
-          <div className="md:col-span-2 glass-panel p-6 rounded-2xl flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-label text-xs tracking-widest text-primary uppercase font-bold">Active Protocols</span>
-              <div className="flex gap-2 items-center">
-                <span className="w-2 h-2 rounded-full bg-primary-fixed animate-pulse"></span>
-                <span className="text-[10px] font-label text-primary-fixed uppercase tracking-tighter">Real-time sync active</span>
-              </div>
+          {/* Card 2: SIP */}
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="w-8 h-8 rounded-lg bg-[#34C759]/10 flex items-center justify-center mb-3 self-start">
+              <span className="material-symbols-outlined text-[#34C759]">eco</span>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button onClick={() => store.setSalaryModal(true)} className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full hover:bg-primary/20 transition-all group">
-                <span className="material-symbols-outlined text-primary text-lg">bolt</span>
-                <span className="font-label text-xs font-bold tracking-widest text-primary uppercase">Credit Salary</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-secondary/10 border border-secondary/20 rounded-full hover:bg-secondary/20 transition-all group">
-                <span className="material-symbols-outlined text-secondary text-lg">security</span>
-                <span className="font-label text-xs font-bold tracking-widest text-secondary uppercase">Lock Assets</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-surface-variant/40 border border-outline-variant/30 rounded-full hover:bg-surface-variant transition-all group">
-                <span className="material-symbols-outlined text-on-surface-variant text-lg">sync</span>
-                <span className="font-label text-xs font-bold tracking-widest text-on-surface-variant uppercase">Flux Sync</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-surface-variant/40 border border-outline-variant/30 rounded-full hover:bg-surface-variant transition-all group">
-                <span className="material-symbols-outlined text-on-surface-variant text-lg">database</span>
-                <span className="font-label text-xs font-bold tracking-widest text-on-surface-variant uppercase">Data Dump</span>
-              </button>
+            <div className="text-left">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">SIP THIS MONTH</p>
+              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(sip)}</p>
+              <p className="text-xs text-[#34C759]">Auto on 5th</p>
+            </div>
+          </div>
+
+          {/* Card 3: Rent */}
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="w-8 h-8 rounded-lg bg-[#5856D6]/10 flex items-center justify-center mb-3 self-start">
+              <span className="material-symbols-outlined text-[#5856D6]">home</span>
+            </div>
+            <div className="text-left">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">RENT</p>
+              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(rent)}</p>
+              <p className="text-xs text-on-surface-variant opacity-60">Paid • 1st</p>
+            </div>
+          </div>
+
+          {/* Card 4: Travel */}
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="w-8 h-8 rounded-lg bg-[#FF2D55]/10 flex items-center justify-center mb-3 self-start">
+              <span className="material-symbols-outlined text-[#FF2D55]">directions_car</span>
+            </div>
+            <div className="text-left">
+              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">TRAVEL</p>
+              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(travel)}</p>
+              <p className="text-xs text-on-surface-variant opacity-60">Budget set</p>
             </div>
           </div>
         </div>
 
-        <div className="w-full mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-primary">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Liquidity</p>
-              <p className="text-sm font-headline font-bold">{formatCurrency((store.salary?.amount || 0) * 0.2)}</p>
-            </div>
+        {/* AI Insight Banner */}
+        <div className="mt-6 bg-primary-fixed/30 p-4 rounded-xl border-[0.5px] border-primary-fixed flex gap-4 items-start relative overflow-hidden group text-left">
+          <div className="bg-primary-container text-on-primary p-2 rounded-lg flex-shrink-0">
+            <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
           </div>
-          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-secondary">
-            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-secondary">query_stats</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Flux Delta</p>
-              <p className="text-sm font-headline font-bold">+1.82%</p>
-            </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm text-on-surface leading-relaxed">
+              Your ELSS SIP is up <span className="font-bold text-tertiary">14.2% YTD</span>. Consider increasing by ₹500 — it costs you ₹150/month less in tax.
+            </p>
           </div>
-          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-tertiary">
-            <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-tertiary">hub</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Node Load</p>
-              <p className="text-sm font-headline font-bold">24.5 ms</p>
-            </div>
-          </div>
-          <div className="glass-panel p-4 rounded-xl flex items-center gap-4 border-l-4 border-l-error">
-            <div className="w-10 h-10 rounded-lg bg-error/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-error">terminal</span>
-            </div>
-            <div>
-              <p className="text-[10px] font-label text-on-surface-variant uppercase tracking-tighter">Sys Health</p>
-              <p className="text-sm font-headline font-bold text-error">CRITICAL</p>
-            </div>
-          </div>
+          {/* Decorative atmospheric light */}
+          <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
-      </div>
-      
+
+        {/* Action Button */}
+        <div className="mt-6 mb-8">
+          <button 
+            onClick={() => store.setSalaryModal(true)} 
+            className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-lg shadow-primary-container/20"
+          >
+            <span className="material-symbols-outlined">account_balance_wallet</span>
+            <span className="text-lg">Salary credited</span>
+          </button>
+        </div>
+      </main>
+
       <SalaryModal
         isOpen={showSalaryModal}
-        onClose={() => store.setSalaryModal?.(false)}
+        onClose={() => store.setSalaryModal(false)}
         onSubmit={store.updateAllocation}
-        currentAllocation={store.currentAllocation || { emi: 0, rent: 0, savings: 0 }}
+        currentAllocation={store.currentAllocation || { salary: totalSalary, emi, rent, travel, sip, bills }}
       />
-    </main>
+    </div>
   );
 };
