@@ -19,25 +19,26 @@ const PUSH_STORAGE_KEY = 'finvault_push_subscribed';
 
 async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    throw new Error('Push notifications are not supported in this browser.');
+    throw new Error('not_supported');
+  }
+
+  // DON'T re-request if already denied — browser won't show prompt anyway
+  if (Notification.permission === 'denied') {
+    throw new Error('denied');
   }
 
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') {
-    throw new Error('Notification permission denied.');
+    throw new Error('denied');
   }
 
   const reg = await navigator.serviceWorker.ready;
-
-  // Fetch VAPID public key from backend
   const { publicKey } = await api.getVapidPublicKey();
-  if (!publicKey) throw new Error('Server push configuration missing.');
-
-  const applicationServerKey = urlBase64ToUint8Array(publicKey);
+  if (!publicKey) throw new Error('server_error');
 
   const subscription = await reg.pushManager.subscribe({
     userVisibleOnly: true,
-    applicationServerKey,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
   });
 
   await api.subscribeToPush(subscription.toJSON());
@@ -56,6 +57,31 @@ async function unsubscribePush() {
   localStorage.removeItem(PUSH_STORAGE_KEY);
 }
 
+// Detect the browser for "how to unblock" instructions
+function getBrowserName() {
+  const ua = navigator.userAgent;
+  if (ua.includes('Edg/')) return 'Edge';
+  if (ua.includes('Chrome/')) return 'Chrome';
+  if (ua.includes('Firefox/')) return 'Firefox';
+  if (ua.includes('Safari/')) return 'Safari';
+  return 'your browser';
+}
+
+function getUnblockInstructions() {
+  const name = getBrowserName();
+  const base = `Notifications are blocked for this site.`;
+  if (name === 'Chrome' || name === 'Edge') {
+    return `${base} Click the 🔒 lock icon in the address bar → Site settings → Notifications → Allow.`;
+  }
+  if (name === 'Firefox') {
+    return `${base} Click the shield icon in the address bar → Permissions → Notifications → Allow.`;
+  }
+  if (name === 'Safari') {
+    return `${base} Go to Safari → Settings → Websites → Notifications → find this site → Allow.`;
+  }
+  return `${base} Open your browser's site settings and allow notifications for this site.`;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 export const ProfilePage = () => {
   const store = useFinanceStore();
@@ -68,46 +94,62 @@ export const ProfilePage = () => {
     !(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)
   );
 
-  // Push state
+  // ── Push state ─────────────────────────────────────────────────────────────
+  // permissionState: 'default' | 'granted' | 'denied' | 'not_supported'
+  const [permissionState, setPermissionState] = useState('default');
   const [pushEnabled, setPushEnabled] = useState(
     localStorage.getItem(PUSH_STORAGE_KEY) === 'true'
   );
   const [pushLoading, setPushLoading] = useState(false);
-  const [pushStatus, setPushStatus] = useState(''); // 'success' | 'error' | ''
+  const [pushStatus, setPushStatus] = useState(''); // 'success' | 'error' | 'blocked' | ''
   const [pushMessage, setPushMessage] = useState('');
+  const [showUnblockTip, setShowUnblockTip] = useState(false);
+
+  // Read real browser permission on mount and keep in sync
+  useEffect(() => {
+    if (!('Notification' in window)) {
+      setPermissionState('not_supported');
+      return;
+    }
+    setPermissionState(Notification.permission);
+
+    // If previously stored as enabled but permission is now denied, clean up
+    if (Notification.permission === 'denied') {
+      localStorage.removeItem(PUSH_STORAGE_KEY);
+      setPushEnabled(false);
+    }
+
+    // Also verify actual SW subscription matches
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.ready.then(async (reg) => {
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          localStorage.removeItem(PUSH_STORAGE_KEY);
+          setPushEnabled(false);
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
+    const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBtn(true);
     };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
-  // Sync push state with actual browser subscription
-  useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    navigator.serviceWorker.ready.then(async (reg) => {
-      const sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        localStorage.removeItem(PUSH_STORAGE_KEY);
-        setPushEnabled(false);
-      }
-    });
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       alert(
-        'To install FinVault on your device:\n\n1. Tap the Share button in Safari (iOS) or browser settings menu\n2. Select \'Add to Home Screen\'\n3. Open from your home screen for standalone wealth command experience.'
+        "To install FinVault on your device:\n\n1. Tap the Share button in Safari (iOS) or browser settings menu\n2. Select 'Add to Home Screen'\n3. Open from your home screen for standalone wealth command experience."
       );
       return;
     }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User installation decision: ${outcome}`);
     setDeferredPrompt(null);
     setShowInstallBtn(false);
   };
@@ -115,32 +157,83 @@ export const ProfilePage = () => {
   const handleLogout = () => store.logout();
   const handleOpenSalaryRules = () => store.setSalaryModal(true);
 
+  const clearStatus = () => {
+    setTimeout(() => {
+      setPushStatus('');
+      setPushMessage('');
+      setShowUnblockTip(false);
+    }, 6000);
+  };
+
   const handlePushToggle = useCallback(async () => {
+    // If browser has permanently blocked, show unblock instructions
+    if (permissionState === 'denied') {
+      setShowUnblockTip(true);
+      setPushStatus('blocked');
+      setPushMessage(getUnblockInstructions());
+      clearStatus();
+      return;
+    }
+
     setPushLoading(true);
     setPushStatus('');
     setPushMessage('');
+    setShowUnblockTip(false);
+
     try {
       if (pushEnabled) {
         await unsubscribePush();
         setPushEnabled(false);
+        setPermissionState(Notification.permission);
         setPushStatus('success');
         setPushMessage('Smart Alerts turned off.');
       } else {
         await subscribePush();
         setPushEnabled(true);
+        setPermissionState('granted');
         setPushStatus('success');
-        setPushMessage('Smart Alerts enabled! You\'ll get real-time salary and spend alerts.');
+        setPushMessage("Smart Alerts ON! You'll get real-time salary & spend notifications.");
       }
     } catch (err) {
-      setPushStatus('error');
-      setPushMessage(err.message || 'Could not update push notification settings.');
+      if (err.message === 'denied') {
+        setPermissionState('denied');
+        setPushEnabled(false);
+        localStorage.removeItem(PUSH_STORAGE_KEY);
+        setPushStatus('blocked');
+        setShowUnblockTip(true);
+        setPushMessage(getUnblockInstructions());
+      } else if (err.message === 'not_supported') {
+        setPushStatus('error');
+        setPushMessage('Push notifications are not supported in this browser.');
+      } else if (err.message === 'server_error') {
+        setPushStatus('error');
+        setPushMessage('Server not configured for push yet. Add VAPID keys on Render.');
+      } else {
+        setPushStatus('error');
+        setPushMessage(err.message || 'Could not update notification settings.');
+      }
     } finally {
       setPushLoading(false);
-      setTimeout(() => { setPushStatus(''); setPushMessage(''); }, 4000);
+      clearStatus();
     }
-  }, [pushEnabled]);
+  }, [pushEnabled, permissionState]);
 
-  const notifSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+  const notifSupported =
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window;
+
+  // Derive display state
+  const isBlocked = permissionState === 'denied';
+  const toggleDisabled = !notifSupported || pushLoading;
+
+  // Sub-label under Smart Alerts
+  const getSubLabel = () => {
+    if (!notifSupported) return 'Not supported in this browser';
+    if (isBlocked) return 'Blocked — tap for instructions to unblock';
+    if (pushEnabled) return 'Real-time push — salary & spend alerts active';
+    return 'Tap to enable background notifications';
+  };
 
   return (
     <div className="bg-surface text-on-surface min-h-screen pb-32">
@@ -185,7 +278,6 @@ export const ProfilePage = () => {
           <div className="space-y-3">
             <h3 className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest pl-1 text-left">Financial Rules</h3>
             <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
-              {/* Salary Rules */}
               <button
                 onClick={handleOpenSalaryRules}
                 className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
@@ -202,7 +294,6 @@ export const ProfilePage = () => {
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
-              {/* EMI Setup */}
               <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error">
@@ -216,7 +307,6 @@ export const ProfilePage = () => {
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
-              {/* SIP Config */}
               <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center text-tertiary">
@@ -236,7 +326,6 @@ export const ProfilePage = () => {
           <div className="space-y-3">
             <h3 className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest pl-1 text-left">Security &amp; Connectivity</h3>
             <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
-              {/* Linked Banks */}
               <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-on-secondary-fixed-variant/10 flex items-center justify-center text-on-secondary-fixed-variant">
@@ -250,64 +339,92 @@ export const ProfilePage = () => {
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
-              {/* ─── Smart Alerts — Real Push Notifications ─── */}
+              {/* ─── Smart Alerts Row ──────────────────────────────────── */}
               <div
-                className={`w-full flex items-center justify-between p-4 border-b border-outline-variant/10 transition-colors ${
-                  notifSupported ? 'hover:bg-surface-container cursor-pointer' : 'opacity-60'
-                }`}
-                onClick={notifSupported && !pushLoading ? handlePushToggle : undefined}
                 id="smart-alerts-toggle"
+                className={`w-full flex items-center justify-between p-4 transition-colors border-b border-outline-variant/10 ${
+                  isBlocked
+                    ? 'cursor-pointer hover:bg-error/5'
+                    : notifSupported && !pushLoading
+                    ? 'cursor-pointer hover:bg-surface-container'
+                    : ''
+                }`}
+                onClick={!toggleDisabled ? handlePushToggle : undefined}
               >
                 <div className="flex items-center gap-4">
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                      pushEnabled ? 'bg-secondary/20 text-secondary' : 'bg-secondary/10 text-secondary'
+                      isBlocked
+                        ? 'bg-error/10 text-error'
+                        : pushEnabled
+                        ? 'bg-secondary/20 text-secondary'
+                        : 'bg-secondary/10 text-secondary/60'
                     }`}
                   >
                     <span className="material-symbols-outlined">
-                      {pushEnabled ? 'notifications_active' : 'notifications_off'}
+                      {isBlocked
+                        ? 'notifications_off'
+                        : pushEnabled
+                        ? 'notifications_active'
+                        : 'notifications'}
                     </span>
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-semibold block text-on-surface">Smart Alerts</span>
-                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">
-                      {!notifSupported
-                        ? 'Not supported in this browser'
-                        : pushEnabled
-                        ? 'Real-time push — salary & spend alerts'
-                        : 'Tap to enable background notifications'}
+                    <span
+                      className={`text-[10px] uppercase tracking-wider font-semibold ${
+                        isBlocked ? 'text-error/80' : 'text-on-surface-variant'
+                      }`}
+                    >
+                      {getSubLabel()}
                     </span>
                   </div>
                 </div>
-                {/* Toggle pill */}
+
+                {/* Toggle pill or blocked icon */}
                 {notifSupported && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); if (!pushLoading) handlePushToggle(); }}
-                    disabled={pushLoading}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary/40 ${
-                      pushEnabled ? 'bg-secondary' : 'bg-outline-variant'
-                    } ${pushLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    aria-label="Toggle smart alerts"
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
-                        pushEnabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                  isBlocked ? (
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-error/10 border border-error/20">
+                      <span className="material-symbols-outlined text-error text-[14px]">lock</span>
+                      <span className="text-[9px] font-bold text-error uppercase tracking-wider">Blocked</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (!pushLoading) handlePushToggle(); }}
+                      disabled={pushLoading}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-secondary/40 ${
+                        pushEnabled ? 'bg-secondary' : 'bg-outline-variant'
+                      } ${pushLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      aria-label="Toggle smart alerts"
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                          pushEnabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  )
                 )}
               </div>
 
-              {/* Push status toast (inline) */}
+              {/* ─── Status / Unblock tip banner ─────────────────────────── */}
               {pushMessage && (
                 <div
-                  className={`mx-4 my-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all animate-pulse ${
-                    pushStatus === 'error'
-                      ? 'bg-error/10 text-error border border-error/20'
+                  className={`mx-4 mb-3 px-4 py-3 rounded-xl text-xs font-medium leading-relaxed transition-all ${
+                    pushStatus === 'blocked'
+                      ? 'bg-error/8 text-error border border-error/20'
+                      : pushStatus === 'error'
+                      ? 'bg-error/8 text-error border border-error/20'
                       : 'bg-secondary/10 text-secondary border border-secondary/20'
                   }`}
                 >
-                  {pushMessage}
+                  {pushStatus === 'blocked' && (
+                    <div className="flex gap-2 items-start">
+                      <span className="material-symbols-outlined text-[16px] mt-0.5 shrink-0">info</span>
+                      <span>{pushMessage}</span>
+                    </div>
+                  )}
+                  {pushStatus !== 'blocked' && pushMessage}
                 </div>
               )}
 
@@ -332,7 +449,7 @@ export const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Reset Allocations Section */}
+          {/* Reset Allocations */}
           {store.currentAllocation && (
             <button
               onClick={async () => {
@@ -358,7 +475,6 @@ export const ProfilePage = () => {
           </button>
         </div>
 
-        {/* App Metadata */}
         <div className="text-center pt-4 pb-8">
           <p className="text-[10px] font-semibold text-on-surface-variant opacity-50 uppercase tracking-wider">FinVault Premium v4.3.0</p>
         </div>
