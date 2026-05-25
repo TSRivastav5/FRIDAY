@@ -1,9 +1,30 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import User from "../models/User.js";
 import { auth } from "../middleware/auth.js";
 
 const router = Router();
+
+// Clean database (Nuke all users and associated collections)
+router.get("/nuke-all-users", async (req, res) => {
+  try {
+    const userCount = await User.countDocuments();
+    
+    // Clear all documents in all collections dynamically
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      await collections[key].deleteMany({});
+    }
+
+    res.json({
+      success: true,
+      message: `Database cleaned successfully! Cleared ${userCount} users and all associated financial collections. You can now register a fresh account.`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Register
 router.post("/register", async (req, res) => {
