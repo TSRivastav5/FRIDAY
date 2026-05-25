@@ -13,12 +13,12 @@ export const SalaryModal = ({ isOpen, onClose, onSubmit, currentAllocation }) =>
   const [mcpRecommendation, setMcpRecommendation] = useState(null);
 
   const [formData, setFormData] = useState({
-    salary: currentAllocation?.salary || 85000,
-    emi: currentAllocation?.emi || 18000,
-    rent: currentAllocation?.rent || 12000,
-    travel: currentAllocation?.travel || 6000,
-    sip: currentAllocation?.sip || 10000,
-    bills: currentAllocation?.bills || 3500,
+    salary: currentAllocation?.salary ?? 0,
+    emi: currentAllocation?.emi ?? 0,
+    rent: currentAllocation?.rent ?? 0,
+    travel: currentAllocation?.travel ?? 0,
+    sip: currentAllocation?.sip ?? 0,
+    bills: currentAllocation?.bills ?? 0,
   });
 
   useEffect(() => {
@@ -29,12 +29,12 @@ export const SalaryModal = ({ isOpen, onClose, onSubmit, currentAllocation }) =>
       setMcpRecommendation(null);
       if (currentAllocation) {
         setFormData({
-          salary: currentAllocation.salary || 85000,
-          emi: currentAllocation.emi || 18000,
-          rent: currentAllocation.rent || 12000,
-          travel: currentAllocation.travel || 6000,
-          sip: currentAllocation.sip || 10000,
-          bills: currentAllocation.bills || 3500,
+          salary: currentAllocation.salary ?? 0,
+          emi: currentAllocation.emi ?? 0,
+          rent: currentAllocation.rent ?? 0,
+          travel: currentAllocation.travel ?? 0,
+          sip: currentAllocation.sip ?? 0,
+          bills: currentAllocation.bills ?? 0,
         });
       }
     }
@@ -254,8 +254,23 @@ export const SalaryModal = ({ isOpen, onClose, onSubmit, currentAllocation }) =>
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-4"
                   >
-                    <div>
-                      <h2 className="text-xl font-bold font-headline text-on-surface">Fine-tune Your Plan</h2>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold font-headline text-on-surface">Fine-tune Your Plan</h2>
+                        <button
+                          onClick={() => setFormData(prev => ({
+                            ...prev,
+                            emi: 0,
+                            rent: 0,
+                            sip: 0,
+                            travel: 0,
+                            bills: 0
+                          }))}
+                          className="px-2.5 py-1 text-[10px] font-bold text-error bg-error/5 hover:bg-error/10 border border-error/15 rounded-lg active:scale-95 transition-all"
+                        >
+                          Reset to ₹0
+                        </button>
+                      </div>
                       {aiInsight && (
                         <p className="text-[11px] font-medium text-primary bg-primary/5 border border-primary/10 p-2.5 rounded-lg mt-1.5 leading-relaxed">
                           💡 {aiInsight}

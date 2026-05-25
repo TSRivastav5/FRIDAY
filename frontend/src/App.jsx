@@ -54,12 +54,12 @@ function App() {
   }
 
   // Calculate dynamic default allocation values for the modal
-  const emi = store.currentAllocation?.emi ?? 18000;
-  const sip = store.currentAllocation?.sip ?? 10000;
-  const rent = store.currentAllocation?.rent ?? 12000;
-  const travel = store.currentAllocation?.travel ?? 6000;
-  const bills = store.currentAllocation?.bills ?? 3500;
-  const totalSalary = store.salary?.amount || 85000;
+  const emi = store.currentAllocation?.emi ?? 0;
+  const sip = store.currentAllocation?.sip ?? 0;
+  const rent = store.currentAllocation?.rent ?? 0;
+  const travel = store.currentAllocation?.travel ?? 0;
+  const bills = store.currentAllocation?.bills ?? 0;
+  const totalSalary = store.salary?.amount || 0;
   
   const currentAllocation = store.currentAllocation || {
     salary: totalSalary,

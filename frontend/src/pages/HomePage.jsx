@@ -7,12 +7,12 @@ export const HomePage = () => {
   const userName = store.user?.name || "Rahul";
   
   // Calculate dynamic values
-  const totalSalary = store.salary?.amount || 85000;
-  const emi = store.currentAllocation?.emi ?? 18000;
-  const sip = store.currentAllocation?.sip ?? 10000;
-  const rent = store.currentAllocation?.rent ?? 12000;
-  const travel = store.currentAllocation?.travel ?? 6000;
-  const bills = store.currentAllocation?.bills ?? 3500;
+  const totalSalary = store.salary?.amount || 0;
+  const emi = store.currentAllocation?.emi ?? 0;
+  const sip = store.currentAllocation?.sip ?? 0;
+  const rent = store.currentAllocation?.rent ?? 0;
+  const travel = store.currentAllocation?.travel ?? 0;
+  const bills = store.currentAllocation?.bills ?? 0;
   
   const totalAllocated = emi + sip + rent + travel + bills;
   const availableBalance = totalSalary - totalAllocated;
@@ -153,8 +153,8 @@ export const HomePage = () => {
           <div className="absolute -right-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
         </div>
 
-        {/* Action Button */}
-        <div className="mt-6 mb-8">
+        {/* Action Buttons */}
+        <div className="mt-6 mb-8 space-y-3">
           {creditStatus === 'idle' && (
             <button 
               onClick={handleCreditSalary}
@@ -181,6 +181,21 @@ export const HomePage = () => {
             >
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
               <span className="text-lg">Credited!</span>
+            </button>
+          )}
+
+          {/* Reset Allocations Button */}
+          {store.currentAllocation && (
+            <button
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to reset all your allocations and salary back to ₹0?")) {
+                  await store.resetAllocation();
+                }
+              }}
+              className="w-full bg-white text-error border border-error/25 hover:bg-error/5 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all text-xs"
+            >
+              <span className="material-symbols-outlined text-sm">restart_alt</span>
+              <span>Reset Allocations & Salary</span>
             </button>
           )}
         </div>

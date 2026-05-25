@@ -81,6 +81,28 @@ export const useFinanceStore = create(
         }
       },
 
+      resetAllocation: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const state = get();
+          const id = state.salary?._id;
+          const emptyAllocation = { emi: 0, rent: 0, travel: 0, sip: 0, bills: 0, remaining: 0 };
+          
+          if (id) {
+            await fridayAPI.updateAllocation(id, emptyAllocation);
+          }
+          
+          set({
+            currentAllocation: emptyAllocation,
+            salary: null,
+            isLoading: false
+          });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
       logout: () => {
         fridayAPI.logout();
         set({ user: null, isAuthenticated: false });

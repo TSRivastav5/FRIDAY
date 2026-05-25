@@ -15,14 +15,14 @@ export const ExpensesPage = () => {
     store.fetchExpenses?.();
   }, []);
 
-  const totalSalary = store.salary?.amount || 85000;
+  const totalSalary = store.salary?.amount || 0;
   
   // Salary allocation breakdown values
-  const emi = store.currentAllocation?.emi ?? 18000;
-  const rent = store.currentAllocation?.rent ?? 12000;
-  const sip = store.currentAllocation?.sip ?? 10000;
-  const travel = store.currentAllocation?.travel ?? 6000;
-  const bills = store.currentAllocation?.bills ?? 3500;
+  const emi = store.currentAllocation?.emi ?? 0;
+  const rent = store.currentAllocation?.rent ?? 0;
+  const sip = store.currentAllocation?.sip ?? 0;
+  const travel = store.currentAllocation?.travel ?? 0;
+  const bills = store.currentAllocation?.bills ?? 0;
   const totalAllocated = emi + rent + sip + travel + bills;
   const youKeep = totalSalary - totalAllocated;
 
