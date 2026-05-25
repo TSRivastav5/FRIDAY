@@ -4,6 +4,7 @@ import FridayAgent from "../services/friday-agent.js";
 import Salary from "../models/Salary.js";
 import User from "../models/User.js";
 import ChatHistory from "../models/ChatHistory.js";
+import { sendPushToUser } from "../services/push.service.js";
 
 const router = Router();
 router.use(auth);
@@ -88,6 +89,16 @@ router.post("/salary-credited", async (req, res) => {
     // Update user's salary
     await User.findByIdAndUpdate(req.user.id, {
       "financialProfile.monthlySalary": amount,
+    });
+
+    // 🔔 Fire real push notification
+    const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+    await sendPushToUser(req.user.id, {
+      title: "💰 Salary Protocol Active",
+      body: `${fmt(amount)} credited. FinVault is auto-allocating your commitments.`,
+      icon: "/icon-192.png",
+      tag: "salary-credited",
+      url: "/",
     });
 
     res.json({

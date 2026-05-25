@@ -41,3 +41,59 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// ─── Web Push: receive notification from backend ─────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = {
+      title: 'FinVault',
+      body: event.data.text(),
+      icon: '/icon-192.png',
+      tag: 'finvault',
+      url: '/',
+    };
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon || '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'finvault',
+    renotify: true,
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    data: { url: data.url || '/' },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'FinVault', options)
+  );
+});
+
+// ─── Web Push: handle notification tap → open / focus the app ────────────────
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Focus existing FinVault tab if one is open
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(targetUrl);
+            return client.focus();
+          }
+        }
+        // Otherwise open a new tab
+        return self.clients.openWindow(targetUrl);
+      })
+  );
+});
+

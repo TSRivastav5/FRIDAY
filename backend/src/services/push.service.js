@@ -1,0 +1,59 @@
+import webpush from "web-push";
+import User from "../models/User.js";
+
+// Initialize VAPID credentials once on import
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL || "mailto:admin@finvault.app",
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
+
+/**
+ * Send a push notification to all active subscriptions belonging to a user.
+ * Silently removes stale/expired subscriptions (410 Gone).
+ */
+export async function sendPushToUser(userId, { title, body, icon, tag, url }) {
+  try {
+    const user = await User.findById(userId).select("settings.pushSubscriptions");
+    const subs = user?.settings?.pushSubscriptions || [];
+    if (subs.length === 0) return;
+
+    const payload = JSON.stringify({
+      title,
+      body,
+      icon: icon || "/icon-192.png",
+      tag: tag || "finvault",
+      url: url || "/",
+    });
+
+    const results = await Promise.allSettled(
+      subs.map((sub) => webpush.sendNotification(sub, payload))
+    );
+
+    // Clean up expired subscriptions (status 410 = Gone)
+    const expiredEndpoints = [];
+    results.forEach((result, idx) => {
+      if (
+        result.status === "rejected" &&
+        result.reason?.statusCode === 410
+      ) {
+        expiredEndpoints.push(subs[idx].endpoint);
+      }
+    });
+
+    if (expiredEndpoints.length > 0) {
+      await User.findByIdAndUpdate(userId, {
+        $pull: {
+          "settings.pushSubscriptions": {
+            endpoint: { $in: expiredEndpoints },
+          },
+        },
+      });
+    }
+  } catch (err) {
+    // Non-fatal — push failures should never break the main API response
+    console.error("⚠️ Push notification error:", err.message);
+  }
+}
+
+export default webpush;

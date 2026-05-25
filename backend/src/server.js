@@ -11,6 +11,7 @@ import salaryRoutes from "./routes/salary.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import investmentRoutes from "./routes/investment.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
+import pushRoutes from "./routes/push.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use("/api/salary", salaryRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/investments", investmentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/push", pushRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

@@ -168,6 +168,19 @@ class FridayAPI {
       financialProfile: profile,
     });
   }
+
+  // ─── Push Notifications ────────────────────────────────────────────────────
+  getVapidPublicKey() {
+    return this.get("/push/vapid-public-key");
+  }
+
+  subscribeToPush(subscription) {
+    return this.post("/push/subscribe", { subscription });
+  }
+
+  unsubscribeFromPush(endpoint) {
+    return this.post("/push/unsubscribe", { endpoint });
+  }
 }
 
 export const api = new FridayAPI();

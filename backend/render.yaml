@@ -14,3 +14,9 @@
         sync: false
       - key: FRONTEND_URL
         value: https://your-friday-app.vercel.app
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_EMAIL
+        value: mailto:admin@finvault.app

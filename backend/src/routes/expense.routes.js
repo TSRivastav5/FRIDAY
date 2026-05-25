@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth.js";
 import Expense from "../models/Expense.js";
+import { sendPushToUser } from "../services/push.service.js";
 
 const router = Router();
 router.use(auth);
@@ -32,13 +33,25 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add expense
+  // Add expense
 router.post("/", async (req, res) => {
   try {
     const expense = await Expense.create({
       userId: req.user.id,
       ...req.body,
     });
+
+    // 🔔 Fire real push notification
+    const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+    const cat = expense.category || "General";
+    await sendPushToUser(req.user.id, {
+      title: `💸 Spend Logged — ${cat}`,
+      body: `${fmt(expense.amount)} tracked under ${cat}. Check your surplus on FinVault.`,
+      icon: "/icon-192.png",
+      tag: `expense-${expense._id}`,
+      url: "/expenses",
+    });
+
     res.status(201).json({ success: true, expense });
   } catch (error) {
     res.status(500).json({ error: error.message });

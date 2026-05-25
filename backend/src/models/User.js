@@ -67,7 +67,20 @@ const userSchema = new mongoose.Schema(
       darkMode: { type: Boolean, default: false },
       notifications: { type: Boolean, default: true },
       currency: { type: String, default: "INR" },
-      pushSubscription: { type: Object },
+      // Array of browser push subscription objects (one per device/browser)
+      pushSubscriptions: {
+        type: [
+          {
+            endpoint: { type: String, required: true },
+            expirationTime: { type: Number, default: null },
+            keys: {
+              p256dh: { type: String, required: true },
+              auth: { type: String, required: true },
+            },
+          },
+        ],
+        default: [],
+      },
     },
   },
   {
