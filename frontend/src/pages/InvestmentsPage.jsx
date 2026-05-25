@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency, generateId } from '../utils/helpers';
+import fridayAPI from '../services/api';
+import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 export const InvestmentsPage = () => {
   const store = useFinanceStore();
@@ -13,9 +15,36 @@ export const InvestmentsPage = () => {
     currentValue: '',
   });
 
+  const [marketFeed, setMarketFeed] = useState({
+    nifty: null,
+    sensex: null,
+    isLoading: false
+  });
+
   useEffect(() => {
     // Fetch investments on mount
     store.fetchInvestments?.();
+
+    // Fetch live market feed
+    const fetchMarketFeed = async () => {
+      setMarketFeed(prev => ({ ...prev, isLoading: true }));
+      try {
+        const [niftyRes, sensexRes] = await Promise.all([
+          fridayAPI.getMarketQuote('^NSEI'),
+          fridayAPI.getMarketQuote('^BSESN')
+        ]);
+        setMarketFeed({
+          nifty: niftyRes.quote,
+          sensex: sensexRes.quote,
+          isLoading: false
+        });
+      } catch (err) {
+        console.error("Failed to fetch market feed:", err);
+        setMarketFeed(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    fetchMarketFeed();
   }, []);
 
   const stats = store.portfolioStats || { totalInvested: 0, currentValue: 0, totalGain: 0, gainPercent: 0 };
@@ -51,6 +80,27 @@ export const InvestmentsPage = () => {
   const totalInvested = stats.totalInvested ?? 0;
   const totalGains = stats.totalGain ?? (totalValue - totalInvested);
   const gainPercent = parseFloat(stats.gainPercent || 0);
+
+  // Calculate distribution by type for the chart
+  const distributionData = holdings.reduce((acc, current) => {
+    const existing = acc.find(item => item.name === current.type);
+    if (existing) {
+      existing.value += current.currentValue;
+    } else {
+      acc.push({ name: current.type, value: current.currentValue });
+    }
+    return acc;
+  }, []);
+
+  const ASSET_COLORS = {
+    Equity: '#1A56F5', // primary blue
+    Debt: '#FFB038',   // orange-yellow
+    Hybrid: '#5856D6', // violet-indigo
+    Cash: '#34C759',   // green
+    Other: '#8E8E93'   // grey
+  };
+
+  const getAssetColor = (name) => ASSET_COLORS[name] || ASSET_COLORS.Other;
 
   const handleAddHolding = async () => {
     if (formData.name && formData.amount) {
@@ -95,6 +145,41 @@ export const InvestmentsPage = () => {
       <main className="w-full max-w-md bg-surface min-h-screen pt-[72px] pb-32 flex flex-col items-stretch">
         {/* Portfolio Header Section */}
         <section className="bg-inverse-surface px-5 pt-6 pb-12 rounded-b-[40px] text-left">
+          {/* Live Market Ticker */}
+          <div className="flex gap-4 mb-6 border-b border-white/5 pb-4 overflow-x-auto no-scrollbar">
+            {marketFeed.isLoading ? (
+              <div className="flex items-center gap-2 text-[10px] font-bold text-on-primary/40 uppercase tracking-widest">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+                Syncing Live Indices...
+              </div>
+            ) : marketFeed.nifty || marketFeed.sensex ? (
+              <>
+                {marketFeed.nifty && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] font-bold text-on-primary/60 uppercase tracking-wider">{marketFeed.nifty.name}</span>
+                    <span className="text-xs font-bold text-on-primary">{marketFeed.nifty.currentPrice.toLocaleString('en-IN')}</span>
+                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.nifty.changePercent >= 0 ? 'text-[#34C759]' : 'text-error'}`}>
+                      <span className="material-symbols-outlined text-[14px]">{marketFeed.nifty.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
+                      {marketFeed.nifty.changePercent.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+                {marketFeed.sensex && (
+                  <div className="flex items-center gap-1.5 shrink-0 border-l border-white/10 pl-4">
+                    <span className="text-[10px] font-bold text-on-primary/60 uppercase tracking-wider">{marketFeed.sensex.name}</span>
+                    <span className="text-xs font-bold text-on-primary">{marketFeed.sensex.currentPrice.toLocaleString('en-IN')}</span>
+                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.sensex.changePercent >= 0 ? 'text-[#34C759]' : 'text-error'}`}>
+                      <span className="material-symbols-outlined text-[14px]">{marketFeed.sensex.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
+                      {marketFeed.sensex.changePercent.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-[10px] text-on-primary/30 uppercase font-semibold">Feed temporarily offline</div>
+            )}
+          </div>
+
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-semibold tracking-wider text-on-primary-fixed opacity-60">PORTFOLIO TOTAL</p>
             <div className="flex items-baseline gap-2">
@@ -131,6 +216,71 @@ export const InvestmentsPage = () => {
             </p>
           </div>
         </div>
+
+        {/* Holdings Distribution Chart Card */}
+        {holdings.length > 0 && (
+          <section className="px-5 mt-6 text-left">
+            <div className="bg-surface-container-lowest p-5 rounded-2xl border-[0.5px] border-outline-variant/30 shadow-sm">
+              <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-4">Holdings Allocation</h3>
+              <div className="flex items-center justify-between gap-4">
+                {/* Donut Chart */}
+                <div className="w-[140px] h-[140px] relative shrink-0">
+                  <PieChart width={140} height={140}>
+                    <Pie
+                      data={distributionData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={60}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {distributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getAssetColor(entry.name)} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Value']} 
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(13, 19, 38, 0.95)', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        borderRadius: '8px', 
+                        fontSize: '10px', 
+                        color: '#fff',
+                      }}
+                    />
+                  </PieChart>
+                  {/* Center Text inside Donut */}
+                  <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
+                    <span className="text-[8px] font-semibold text-outline uppercase tracking-wider">Total</span>
+                    <span className="text-xs font-black text-on-surface">₹{Math.round(totalValue).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Legend list */}
+                <div className="flex-grow flex flex-col gap-2">
+                  {distributionData.map((item) => {
+                    const pct = totalValue > 0 ? (item.value / totalValue) * 100 : 0;
+                    return (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <div 
+                            className="w-2.5 h-2.5 rounded-full shrink-0" 
+                            style={{ backgroundColor: getAssetColor(item.name) }} 
+                          />
+                          <span className="font-semibold text-on-surface-variant">{item.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-bold text-on-surface">{pct.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Form Container */}
         <AnimatePresence>

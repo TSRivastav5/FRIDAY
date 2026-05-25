@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
+import { GoalTracker } from '../components/GoalTracker';
 
 export const HomePage = () => {
   const store = useFinanceStore();
@@ -183,6 +184,11 @@ export const HomePage = () => {
               <span className="text-lg">Credited!</span>
             </button>
           )}
+        </div>
+
+        {/* Goal Tracker Section */}
+        <div className="mt-6 border-t border-outline-variant/20 pt-6">
+          <GoalTracker />
         </div>
       </main>
     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 
 export const ProfilePage = () => {
@@ -6,6 +6,37 @@ export const ProfilePage = () => {
 
   const userName = store.user?.name || "Rahul Kapoor";
   const userEmail = store.user?.email || "rahul.kapoor@finvault.com";
+
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(
+    !(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)
+  );
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert("To install FinVault on your device:\n\n1. Tap the Share button in Safari (iOS) or browser settings menu\n2. Select 'Add to Home Screen'\n3. Open from your home screen for standalone wealth command experience.");
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User installation decision: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
 
   const handleLogout = () => {
     store.logout();
@@ -125,7 +156,7 @@ export const ProfilePage = () => {
               </button>
 
               {/* Notifications */}
-              <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
                     <span className="material-symbols-outlined">notifications_active</span>
@@ -137,6 +168,25 @@ export const ProfilePage = () => {
                 </div>
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
+
+              {/* Install PWA Option */}
+              {showInstallBtn && (
+                <button 
+                  onClick={handleInstallClick}
+                  className="w-full flex items-center justify-between p-4 bg-primary/5 hover:bg-primary/10 transition-colors active:scale-[0.99] duration-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined">install_mobile</span>
+                    </div>
+                    <div className="text-left">
+                      <span className="text-sm font-bold block text-primary">Install FinVault App</span>
+                      <span className="text-[10px] text-primary/80 uppercase tracking-wider font-semibold">Enable offline wealth management</span>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-primary">download</span>
+                </button>
+              )}
             </div>
           </div>
 

@@ -133,6 +133,9 @@ class FridayAPI {
   clearAllInvestments() {
     return this.del("/investments/clear/all-assets");
   }
+  getMarketQuote(symbol) {
+    return this.get(`/investments/market/quote/${symbol}`);
+  }
 
   // AI
   chatWithFriday(message) {

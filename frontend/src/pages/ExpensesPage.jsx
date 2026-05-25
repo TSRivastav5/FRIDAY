@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency, formatDateShort } from '../utils/helpers';
 import { expenseCategories, generateId } from '../data/mockData';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const ExpensesPage = () => {
   const store = useFinanceStore();
@@ -28,6 +29,36 @@ export const ExpensesPage = () => {
 
   const monthlyExpenses = store.expenses || [];
   const totalMonthlyLedger = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+  const allocationChartData = [
+    { name: 'EMI', value: emi, color: '#FF3B30' },
+    { name: 'Rent', value: rent, color: '#5856D6' },
+    { name: 'SIP', value: sip, color: '#34C759' },
+    { name: 'Travel', value: travel, color: '#007AFF' },
+    { name: 'Bills', value: bills, color: '#8E8E93' },
+    { name: 'Surplus', value: youKeep, color: '#FFB038' }
+  ].filter(item => item.value > 0);
+
+  const categoryColors = {
+    Food: '#FF9500',
+    Travel: '#007AFF',
+    Shopping: '#FF2D55',
+    Entertainment: '#5856D6',
+    Bills: '#FFCC00',
+    Health: '#34C759',
+    Education: '#5AC8FA',
+    Other: '#8E8E93'
+  };
+
+  const categoryTotals = monthlyExpenses.reduce((acc, curr) => {
+    acc[curr.category] = (acc[curr.category] || 0) + curr.amount;
+    return acc;
+  }, {});
+
+  const barChartData = Object.keys(categoryTotals).map(cat => ({
+    name: cat,
+    amount: categoryTotals[cat]
+  }));
 
   const handleAddExpense = async () => {
     if (formData.amount) {
@@ -90,56 +121,86 @@ export const ExpensesPage = () => {
 
         {/* Breakdown Card */}
         <div className="bg-surface-container-lowest rounded-xl border-[0.5px] border-outline-variant/30 shadow-sm overflow-hidden text-left">
-          <div className="p-4 space-y-4">
+          <div className="p-5 flex flex-col items-center gap-6 border-b border-outline-variant/20">
+            {/* Donut Chart */}
+            {allocationChartData.length > 0 && (
+              <div className="w-[130px] h-[130px] relative shrink-0">
+                <PieChart width={130} height={130}>
+                  <Pie
+                    data={allocationChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={42}
+                    outerRadius={56}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {allocationChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Allocated']}
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(13, 19, 38, 0.95)', 
+                      border: '1px solid rgba(255,255,255,0.1)', 
+                      borderRadius: '8px', 
+                      fontSize: '10px', 
+                      color: '#fff',
+                    }}
+                  />
+                </PieChart>
+                <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
+                  <span className="text-[8px] font-semibold text-outline uppercase tracking-wider">Salary</span>
+                  <span className="text-[11px] font-black text-on-surface">₹{(totalSalary / 1000).toFixed(0)}k</span>
+                </div>
+              </div>
+            )}
+
             {/* Breakdown Rows */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-error"></div>
-                <span className="text-sm text-on-surface">Home loan EMI</span>
+            <div className="w-full space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF3B30]"></div>
+                  <span className="text-sm font-semibold text-on-surface">EMI Commitments</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface">-{formatCurrency(emi)}</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(emi * 0.67)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                <span className="text-sm text-on-surface">Car loan EMI</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#5856D6]"></div>
+                  <span className="text-sm font-semibold text-on-surface">House Rent</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface">-{formatCurrency(rent)}</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(emi * 0.33)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                <span className="text-sm text-on-surface">Rent</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#34C759]"></div>
+                  <span className="text-sm font-semibold text-on-surface">SIP Investments</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface">-{formatCurrency(sip)}</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(rent)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-tertiary"></div>
-                <span className="text-sm text-on-surface">SIP investment</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#007AFF]"></div>
+                  <span className="text-sm font-semibold text-on-surface">Travel Budget</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface">-{formatCurrency(travel)}</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(sip)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-primary-container"></div>
-                <span className="text-sm text-on-surface">Travel budget</span>
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#8E8E93]"></div>
+                  <span className="text-sm font-semibold text-on-surface">Bills & Utilities</span>
+                </div>
+                <span className="text-sm font-bold text-on-surface">-{formatCurrency(bills)}</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(travel)}</span>
-            </div>
-            <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-outline"></div>
-                <span className="text-sm text-on-surface">Bills + subscriptions</span>
-              </div>
-              <span className="text-sm font-semibold text-on-surface">-{formatCurrency(bills)}</span>
             </div>
           </div>
 
           {/* Summary Footer */}
-          <div className="bg-tertiary-fixed/20 p-4 flex justify-between items-center border-t border-tertiary-fixed/30">
+          <div className="bg-tertiary-fixed/20 p-4 flex justify-between items-center">
             <div className="flex flex-col text-left">
-              <span className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">You keep</span>
+              <span className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">You keep (Surplus)</span>
               <span className="text-base font-bold text-tertiary">{formatCurrency(youKeep)}</span>
             </div>
             <div className="w-10 h-10 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center">
@@ -163,6 +224,47 @@ export const ExpensesPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Expense Category Bar Chart */}
+        {monthlyExpenses.length > 0 && (
+          <section className="mt-6 text-left">
+            <div className="bg-surface-container-lowest p-5 rounded-2xl border-[0.5px] border-outline-variant/30 shadow-sm">
+              <h3 className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-4">Spending by Category</h3>
+              <div className="w-full h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: 9 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      tick={{ fill: 'rgba(255, 255, 255, 0.6)', fontSize: 9 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Spent']}
+                      contentStyle={{ 
+                        backgroundColor: 'rgba(13, 19, 38, 0.95)', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        borderRadius: '8px', 
+                        fontSize: '10px', 
+                        color: '#fff',
+                      }}
+                    />
+                    <Bar dataKey="amount" fill="#1A56F5" radius={[4, 4, 0, 0]}>
+                      {barChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={categoryColors[entry.name] || '#1A56F5'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Detailed Ledger Section */}
         <section className="mt-8 text-left">

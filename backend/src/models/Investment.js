@@ -22,6 +22,10 @@ const investmentSchema = new mongoose.Schema(
         "nps",
         "gold",
         "elss",
+        "Equity",
+        "Debt",
+        "Hybrid",
+        "Cash"
       ],
     },
     platform: { type: String, default: "groww" },
@@ -62,8 +66,20 @@ const investmentSchema = new mongoose.Schema(
     tags: [String], // ["tax_saving", "long_term", "emergency"]
     isActive: { type: Boolean, default: true },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+investmentSchema.virtual("amount")
+  .get(function() {
+    return this.investedAmount;
+  })
+  .set(function(val) {
+    this.investedAmount = val;
+  });
 
 investmentSchema.index({ userId: 1, type: 1 });
 
