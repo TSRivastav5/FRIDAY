@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
+import { SalaryModal } from '../components/SalaryModal';
 
 export const HomePage = () => {
   const store = useFinanceStore();
@@ -16,6 +17,8 @@ export const HomePage = () => {
   
   const totalAllocated = emi + sip + rent + travel + bills;
   const availableBalance = totalSalary - totalAllocated;
+
+  const showSalaryModal = store.showSalaryModal || false;
 
   // Local state for the Salary Credited button simulation
   const [creditStatus, setCreditStatus] = useState('idle'); // 'idle' | 'processing' | 'credited'
@@ -33,10 +36,13 @@ export const HomePage = () => {
       setTimeout(() => {
         setCreditStatus('credited');
         
-        // Reset status back to idle after 3 seconds so it can be clicked again
+        // Open the redesigned smart allocation modal
+        store.setSalaryModal(true);
+        
+        // Reset status back to idle after 1 second so it is ready for future actions
         setTimeout(() => {
           setCreditStatus('idle');
-        }, 3000);
+        }, 1000);
       }, 1200);
     } catch (err) {
       console.error("Failed to credit salary:", err);
@@ -180,6 +186,13 @@ export const HomePage = () => {
           )}
         </div>
       </main>
+
+      <SalaryModal
+        isOpen={showSalaryModal}
+        onClose={() => store.setSalaryModal(false)}
+        onSubmit={store.updateAllocation}
+        currentAllocation={store.currentAllocation || { salary: totalSalary, emi, rent, travel, sip, bills }}
+      />
     </div>
   );
 };
