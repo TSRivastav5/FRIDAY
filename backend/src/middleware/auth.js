@@ -8,7 +8,7 @@ export const auth = (req, res, next) => {
     }
 
     const token = header.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "default_super_secret_friday_key");
     req.user = decoded;
     next();
   } catch (error) {

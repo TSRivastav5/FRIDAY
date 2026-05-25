@@ -51,7 +51,7 @@ router.post("/register", async (req, res) => {
     const user = await User.create({ name, email, password });
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "default_super_secret_friday_key",
       { expiresIn: "90d" } // Long token for convenience
     );
 
@@ -83,7 +83,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "default_super_secret_friday_key",
       { expiresIn: "90d" }
     );
 
