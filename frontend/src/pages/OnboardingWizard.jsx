@@ -9,7 +9,7 @@ export const OnboardingWizard = () => {
 
   const [step, setStep] = useState('pin'); // 'pin' | 'salary' | 'commitments' | 'investments' | 'summary'
   const [pin, setPin] = useState('');
-  const [salary, setSalary] = useState('85000');
+  const [salary, setSalary] = useState('');
   
   // Custom allocations
   const [emi, setEmi] = useState(0);
