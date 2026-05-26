@@ -193,6 +193,31 @@ export const useFinanceStore = create(
         });
       },
 
+      deleteAccount: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await fridayAPI.deleteAccount();
+          fridayAPI.logout();
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLocked: false,
+            salary: null,
+            salaryHistory: [],
+            expenses: [],
+            investments: [],
+            portfolioStats: null,
+            currentAllocation: null,
+            chatMessages: [],
+            error: null,
+            isLoading: false,
+          });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
       // Salary
       creditSalary: async (amount) => {
         set({ isLoading: true });

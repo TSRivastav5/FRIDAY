@@ -110,6 +110,8 @@ export const ProfilePage = () => {
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [isUpdatingPin, setIsUpdatingPin] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Read real browser permission on mount and keep in sync
   useEffect(() => {
@@ -496,6 +498,15 @@ export const ProfilePage = () => {
             <span className="material-symbols-outlined">logout</span>
             <span className="text-sm">Sign Out</span>
           </button>
+
+          {/* Delete Account */}
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full mt-2 flex items-center justify-center gap-2 p-4 text-white font-bold bg-error hover:bg-error/90 border border-error/10 rounded-xl transition-colors active:scale-95 shadow-md shadow-error/10 text-sm"
+          >
+            <span className="material-symbols-outlined">delete_forever</span>
+            <span>Delete Account Permanently</span>
+          </button>
         </div>
 
         <div className="text-center pt-4 pb-8">
@@ -600,6 +611,82 @@ export const ProfilePage = () => {
                 >
                   {isUpdatingPin ? "Updating..." : "Confirm PIN Update"}
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white border border-outline-variant/30 rounded-2xl p-6 shadow-premium relative text-left"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-base font-bold text-error font-headline">Delete Account Irreversibly?</h3>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                  }}
+                  className="text-outline hover:text-on-surface p-1 rounded-lg"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-3 bg-error/5 text-error text-xs rounded-xl border border-error/10 leading-relaxed font-semibold">
+                  ⚠️ WARNING: This will permanently delete your user profile and nuke all your tracked incomes, budgets, investments, and advisor chat logs. This action cannot be undone.
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs text-on-surface-variant font-semibold">
+                    Type <strong className="text-error select-all">DELETE</strong> in the box below to confirm:
+                  </p>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-error/20 focus:border-error focus:outline-none transition-all text-sm bg-background text-center font-bold tracking-wider"
+                    placeholder="DELETE"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeleteConfirmText('');
+                    }}
+                    className="flex-1 py-3 border border-outline-variant/40 hover:bg-background text-on-surface font-semibold text-xs rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (deleteConfirmText !== "DELETE") {
+                        alert("Please type 'DELETE' exactly to confirm account removal.");
+                        return;
+                      }
+                      try {
+                        await store.deleteAccount();
+                        alert("Your account has been deleted successfully.");
+                      } catch (err) {
+                        alert(err.message || "Failed to delete account");
+                      }
+                    }}
+                    disabled={deleteConfirmText !== "DELETE"}
+                    className="flex-1 py-3 bg-error hover:bg-error/95 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center"
+                  >
+                    Delete Account
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

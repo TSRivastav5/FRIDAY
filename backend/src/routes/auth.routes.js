@@ -3,6 +3,10 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import { auth } from "../middleware/auth.js";
+import Expense from "../models/Expense.js";
+import Investment from "../models/Investment.js";
+import Salary from "../models/Salary.js";
+import ChatHistory from "../models/ChatHistory.js";
 
 const router = Router();
 
@@ -232,6 +236,32 @@ router.get("/family", auth, async (req, res) => {
     }).select("-password");
 
     res.json({ success: true, family });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete user account and all associated collections permanently
+router.delete("/delete-account", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Delete user from MongoDB
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // 2. Delete all related data collections
+    await Expense.deleteMany({ userId });
+    await Investment.deleteMany({ userId });
+    await Salary.deleteMany({ userId });
+    await ChatHistory.deleteMany({ userId });
+
+    res.json({
+      success: true,
+      message: "Your account and all associated data have been permanently deleted.",
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

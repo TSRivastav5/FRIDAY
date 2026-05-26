@@ -91,6 +91,10 @@ class FridayAPI {
     localStorage.removeItem("friday_user");
   }
 
+  deleteAccount() {
+    return this.del("/auth/delete-account");
+  }
+
   isLoggedIn() {
     return !!this.token;
   }
