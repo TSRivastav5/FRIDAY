@@ -221,11 +221,11 @@ export const InvestmentsPage = () => {
         type: formData.category,
         investedAmount: amt,
         currentValue: amt,
-        sipDetails: isSip ? {
-          monthlyAmount: amt,
+        sipDetails: {
           startDate: formData.startDate ? new Date(formData.startDate) : new Date(),
-          nextDate: formData.startDate ? new Date(new Date(formData.startDate).setMonth(new Date(formData.startDate).getMonth() + 1)) : new Date(new Date().setDate(new Date().getDate() + 10)),
-        } : undefined,
+          monthlyAmount: isSip ? amt : undefined,
+          nextDate: isSip ? (formData.startDate ? new Date(new Date(formData.startDate).setMonth(new Date(formData.startDate).getMonth() + 1)) : new Date(new Date().setDate(new Date().getDate() + 10))) : undefined,
+        },
         tags: formData.linkedToSalary ? ["linked_to_salary"] : [],
       };
       
