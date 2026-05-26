@@ -10,19 +10,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Using Gemini 2.0 Flash — fastest current free model
+// Using Gemini 1.5 Flash — fastest free model (15 RPM free tier)
 export const geminiModel = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-1.5-flash",
   generationConfig: {
-    temperature: 0.3,       // Low for financial accuracy
+    temperature: 0.3,
     topP: 0.8,
     maxOutputTokens: 2048,
   },
 });
 
-// For complex financial analysis, use Gemini 2.0 Flash (Pro-level, also free)
+// For complex financial analysis
 export const geminiProModel = genAI.getGenerativeModel({
-  model: "gemini-2.0-flash",
+  model: "gemini-1.5-flash",
   generationConfig: {
     temperature: 0.2,
     topP: 0.8,
