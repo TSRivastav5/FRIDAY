@@ -82,6 +82,9 @@ app.get("/api/health", (req, res) => {
     ai: "Google Gemini (free)",
     database: "MongoDB Atlas (free)",
     timestamp: new Date().toISOString(),
+    // Safe diagnostic — only shows presence, never the key value
+    geminiKeySet: !!process.env.GEMINI_API_KEY,
+    geminiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
   });
 });
 
