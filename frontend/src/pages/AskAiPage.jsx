@@ -143,6 +143,7 @@ export const AskAiPage = () => {
 
   const chatMessages = store.chatMessages || [];
   const isChatLoading = store.isChatLoading || false;
+  const aiError = store.aiError || null;
 
   // 1. Fetch Chat History on mount
   useEffect(() => {
@@ -474,6 +475,27 @@ export const AskAiPage = () => {
 
         {/* Chat Input Area */}
         <div className="fixed bottom-24 left-0 w-full px-5 z-40 max-w-md mx-auto right-0 pointer-events-none">
+          {/* Real error banner — shown instead of fake "hit a snag" */}
+          {aiError && (
+            <div
+              style={{
+                background: "#FEF2F2",
+                border: "1px solid #FCA5A5",
+                borderRadius: 10,
+                padding: "10px 14px",
+                fontSize: 13,
+                color: "#991B1B",
+                marginBottom: 8,
+                pointerEvents: "auto",
+              }}
+            >
+              <strong>Error:</strong> {aiError}
+              <br />
+              <span style={{ fontSize: 11, opacity: 0.7 }}>
+                Check browser console and Render logs for full details. Make sure GEMINI_API_KEY is set in Render → Environment.
+              </span>
+            </div>
+          )}
           <div className="bg-white rounded-full p-1.5 pl-5 shadow-xl border border-outline-variant/20 flex items-center gap-2 w-full pointer-events-auto">
             <button 
               onClick={toggleListening}

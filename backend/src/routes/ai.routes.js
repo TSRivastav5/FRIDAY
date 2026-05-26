@@ -14,6 +14,15 @@ const agent = new FridayAgent();
 // 💬 Chat with FRIDAY
 router.post("/chat", async (req, res) => {
   try {
+    // Guard: catch missing API key before making the Gemini call
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: "GEMINI_API_KEY is not set on the server",
+        fix: "Add GEMINI_API_KEY to your Render → Environment → Environment Variables",
+      });
+    }
+
     const { message } = req.body;
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
@@ -44,11 +53,14 @@ router.post("/chat", async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    res.status(500).json({
+    // Return the REAL error — never a fake friendly message
+    console.error("AI chat route error:", error.message, error?.status);
+    return res.status(500).json({
       success: false,
-      message:
-        "Sorry Boss, FRIDAY hit a snag. Try again in a moment. 🔄",
-      error: error.message,
+      error: error.message || "Unexpected server error",
+      code: error.status || 500,
+      detail: error.errorDetails || null,
+      hint: "Check Render logs for the full stack trace",
     });
   }
 });

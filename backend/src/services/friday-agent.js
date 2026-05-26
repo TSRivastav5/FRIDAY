@@ -331,12 +331,10 @@ Respond naturally as FRIDAY:
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error("FRIDAY Chat Error:", error.message);
-      return {
-        success: false,
-        message: "Sorry Boss, I hit a snag. Let me try again. 🔄",
-        error: error.message,
-      };
+      // Log the REAL error — never swallow it silently
+      console.error("FRIDAY Chat Error:", error.message, error?.status, error?.errorDetails);
+      // Re-throw so the route layer returns real error details to the frontend
+      throw error;
     }
   }
 

@@ -50,6 +50,7 @@ export const useFinanceStore = create(
       isChatOpen: false,
       isChatLoading: false,
       aiInsight: null,
+      aiError: null,                           // real error string visible in chat UI
       preloadedAiMessage: null,
       setPreloadedAiMessage: (msg) => set({ preloadedAiMessage: msg }),
 
@@ -465,18 +466,25 @@ export const useFinanceStore = create(
 
       // AI Chat
       chatWithFriday: async (message) => {
-        set({ isChatLoading: true });
+        set({ isChatLoading: true, aiError: null });
         get().addChatMessage("user", message);
-        
+
         try {
           const data = await fridayAPI.chatWithFriday(message);
-          const aiResponse = data.message || data.response || "Sorry boss, I couldn't generate a response.";
+          const aiResponse = data.message || data.response || "Sorry, I couldn't generate a response.";
           get().addChatMessage("assistant", aiResponse);
           set({ isChatLoading: false });
           return data;
         } catch (error) {
-          get().addChatMessage("assistant", "Sorry boss, I encountered an issue. Please try again.");
-          set({ isChatLoading: false });
+          // Surface the REAL error — never replace it with a fake friendly message
+          const errMsg = error.message || "Unknown error from server";
+          console.error("Chat error:", errMsg);
+          set({ isChatLoading: false, aiError: errMsg });
+          // Also push it as a visible assistant message so it shows in the chat thread
+          get().addChatMessage(
+            "assistant",
+            `❌ Error: ${errMsg}\n\nCheck Render logs and make sure GEMINI_API_KEY is set in your Render environment variables.`
+          );
           throw error;
         }
       },

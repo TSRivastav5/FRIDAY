@@ -16,6 +16,16 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 dotenv.config();
 
+// ── Fail-fast: catch missing env vars on startup ─────────────────────────────
+const REQUIRED_ENV = ["GEMINI_API_KEY", "MONGODB_URI", "JWT_SECRET"];
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv.length > 0) {
+  console.error("\n❌ MISSING REQUIRED ENVIRONMENT VARIABLES:", missingEnv.join(", "));
+  console.error("   → On Render: go to Dashboard → Your Service → Environment → Add variables");
+  console.error("   → Required: GEMINI_API_KEY, MONGODB_URI, JWT_SECRET");
+  console.error("   → The server will start but AI routes will return 500 until these are set.\n");
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
