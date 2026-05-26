@@ -31,9 +31,18 @@ router.get("/current", async (req, res) => {
 
 router.put("/:id/allocation", async (req, res) => {
   try {
+    const updateObj = {};
+    if (req.body.allocation) {
+      updateObj.allocation = req.body.allocation;
+      updateObj.userAdjusted = true;
+    }
+    if (req.body.paidAllocations !== undefined) {
+      updateObj.paidAllocations = req.body.paidAllocations;
+    }
+
     const salary = await Salary.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
-      { allocation: req.body.allocation, userAdjusted: true },
+      updateObj,
       { new: true }
     );
     if (!salary) return res.status(404).json({ error: "Not found" });

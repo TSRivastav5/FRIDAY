@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
     financialProfile: {
       monthlySalary: { type: Number, default: 0 },
       salaryDay: { type: Number, default: 1 },
+      bankAccount: { type: String, default: "HDFC Bank" },
+      autoSplit: { type: Boolean, default: true },
       riskProfile: {
         type: String,
         enum: ["conservative", "moderate", "aggressive"],

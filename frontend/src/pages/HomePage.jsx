@@ -27,31 +27,7 @@ export const HomePage = () => {
 
   const showSalaryModal = store.showSalaryModal || false;
 
-  // Local state for the Salary Credited button
-  const [creditStatus, setCreditStatus] = useState('idle'); // 'idle' | 'input' | 'processing' | 'credited'
-  const [salaryInput, setSalaryInput] = useState('');
 
-  const handleCreditSalary = async () => {
-    const amount = parseInt(salaryInput.replace(/,/g, ''), 10);
-    if (!amount || amount <= 0) return;
-    if (creditStatus !== 'input') return;
-    
-    setCreditStatus('processing');
-    
-    try {
-      await store.creditSalary(amount);
-      store.fetchTelemetryInsight?.();
-      setTimeout(() => {
-        setCreditStatus('credited');
-        store.setSalaryModal(true);
-        setSalaryInput('');
-        setTimeout(() => setCreditStatus('idle'), 2000);
-      }, 1200);
-    } catch (err) {
-      console.error('Failed to credit salary:', err);
-      setCreditStatus('input');
-    }
-  };
 
   // Determine dynamic month/date context
   const today = new Date();
@@ -255,71 +231,13 @@ export const HomePage = () => {
 
         {/* Action Buttons */}
         <div className="mt-6 mb-8 space-y-3">
-          {/* Step 1: tap to reveal input */}
-          {creditStatus === 'idle' && (
-            <button
-              onClick={() => setCreditStatus('input')}
-              className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-lg shadow-primary-container/20"
-            >
-              <span className="material-symbols-outlined">account_balance_wallet</span>
-              <span className="text-lg">Salary credited</span>
-            </button>
-          )}
-
-          {/* Step 2: enter salary amount */}
-          {creditStatus === 'input' && (
-            <div className="w-full bg-primary-container rounded-xl overflow-hidden">
-              <div className="px-4 pt-4 pb-2">
-                <label className="text-[10px] font-bold text-on-primary/60 uppercase tracking-widest block mb-2">
-                  Enter this month's salary (₹)
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={salaryInput}
-                  onChange={e => setSalaryInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleCreditSalary()}
-                  autoFocus
-                  className="w-full bg-white/10 text-on-primary placeholder:text-on-primary/30 rounded-lg px-4 py-3 text-xl font-bold border border-white/10 focus:outline-none focus:border-white/30 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="e.g. 75000"
-                />
-              </div>
-              <div className="flex border-t border-white/10">
-                <button
-                  onClick={() => { setCreditStatus('idle'); setSalaryInput(''); }}
-                  className="flex-1 py-3 text-on-primary/60 font-semibold text-sm hover:bg-white/5 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreditSalary}
-                  disabled={!salaryInput || parseInt(salaryInput) <= 0}
-                  className="flex-1 py-3 text-on-primary font-bold text-sm bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  Confirm ✓
-                </button>
-              </div>
-            </div>
-          )}
-
-          {creditStatus === 'processing' && (
-            <button
-              className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 cursor-not-allowed opacity-90"
-              disabled
-            >
-              <span className="animate-spin material-symbols-outlined">autorenew</span>
-              <span className="text-lg">Processing...</span>
-            </button>
-          )}
-
-          {creditStatus === 'credited' && (
-            <button
-              className="w-full bg-tertiary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 cursor-default"
-            >
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-              <span className="text-lg">Credited!</span>
-            </button>
-          )}
+          <button
+            onClick={() => store.setSalaryModal(true)}
+            className="w-full bg-primary-container text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-all hover:shadow-lg shadow-primary-container/20"
+          >
+            <span className="material-symbols-outlined">account_balance_wallet</span>
+            <span className="text-lg">Salary credited</span>
+          </button>
         </div>
 
         {/* Goal Tracker Section */}

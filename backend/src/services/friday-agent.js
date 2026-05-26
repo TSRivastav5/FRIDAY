@@ -5,7 +5,7 @@
 // to think, reason, and give financial advice.
 // ============================================================
 
-import { geminiModel, geminiProModel } from "../config/gemini.js";
+import genAI, { geminiModel, geminiProModel } from "../config/gemini.js";
 import { SalaryAnalyzer } from "./salary-analyzer.js";
 import { InvestmentAdvisor } from "./investment-advisor.js";
 import { StockService } from "./stock-service.js";
@@ -14,6 +14,29 @@ import User from "../models/User.js";
 import Expense from "../models/Expense.js";
 import Investment from "../models/Investment.js";
 import Salary from "../models/Salary.js";
+
+// ──────────────────────────────────────────────────
+// 🛠️ GEMINI TOOL DECLARATIONS
+// ──────────────────────────────────────────────────
+const getLiveMarketQuoteDeclaration = {
+  name: "getLiveMarketQuote",
+  description: "Fetches live price, NAV, or quote for financial assets like Nifty 50, Sensex, Gold price, or mutual funds in India.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      assetName: {
+        type: "STRING",
+        description: "The name of the asset (e.g. 'Nifty 50', 'Sensex', 'Gold', or mutual fund names like 'Parag Parikh Flexi Cap Fund')."
+      },
+      assetType: {
+        type: "STRING",
+        enum: ["stock", "mutual_fund", "index", "gold"],
+        description: "The category of asset: stock, mutual_fund, index, or gold."
+      }
+    },
+    required: ["assetName", "assetType"]
+  }
+};
 
 // ──────────────────────────────────────────────────
 // 🧠 FRIDAY'S PERSONALITY
@@ -41,6 +64,63 @@ an AI financial advisor inspired by Tony Stark's AI assistant.
 - SIP > Lump sum (generally)
 - Diversify: Equity 60-70%, Debt 20-30%, Gold 5-10%
 - Max out 80C (₹1.5L) and 80D (₹25K health insurance)
+
+## Structured Output Cards:
+Whenever you present numerical summaries, tables, fund lists, or progress targets (especially in response to allocation queries, investment queries, or portfolio status requests), you MUST append a structured JSON card at the very end of your response inside a [STRUCTURED_CARD]...[/STRUCTURED_CARD] block. Do NOT put standard markdown tables if you can use a structured card.
+Use one of the following schemas for the card content:
+
+1. Table Card Schema (for budget/salary allocations):
+[STRUCTURED_CARD]
+{
+  "type": "table",
+  "title": "Salary Allocation Breakdown",
+  "headers": ["Category", "Amount", "Allocation %"],
+  "rows": [
+    ["EMI", "₹12,000", "20%"],
+    ["Rent", "₹15,000", "25%"],
+    ["SIP", "₹10,000", "16%"],
+    ["Remaining", "₹23,000", "39%"]
+  ]
+}
+[/STRUCTURED_CARD]
+
+2. Progress Card Schema (for goals/emergency funds):
+[STRUCTURED_CARD]
+{
+  "type": "progress",
+  "title": "Emergency Fund Goal",
+  "label": "Target Goal Progress",
+  "current": 15000,
+  "target": 50000,
+  "unit": "₹"
+}
+[/STRUCTURED_CARD]
+
+3. Recommendations Card Schema (for investment tips):
+[STRUCTURED_CARD]
+{
+  "type": "recommendations",
+  "title": "SIP Portfolio Suggestions",
+  "items": [
+    {"name": "Parag Parikh Flexi Cap Fund", "amount": "₹5,000", "action": "Start SIP", "reason": "Consistent 5-year returns (~18% CAGR)"},
+    {"name": "Quant Active Fund", "amount": "₹3,000", "action": "Start SIP", "reason": "Aggressive growth style suited for your risk profile"}
+  ]
+}
+[/STRUCTURED_CARD]
+
+4. Metrics Card Schema (for quick portfolio/spending health metrics):
+[STRUCTURED_CARD]
+{
+  "type": "metrics",
+  "title": "Portfolio Health Overview",
+  "items": [
+    {"label": "Total Invested", "value": "₹1,30,000", "subtext": "Principal amount"},
+    {"label": "Current Value", "value": "₹1,51,000", "subtext": "+16.15% YTD gain"}
+  ]
+}
+[/STRUCTURED_CARD]
+
+Always ensure the JSON inside [STRUCTURED_CARD]...[/STRUCTURED_CARD] is perfectly valid JSON without backticks, syntax errors, or wrapping comments.
 `;
 
 export class FridayAgent {
@@ -49,6 +129,124 @@ export class FridayAgent {
     this.investmentAdvisor = new InvestmentAdvisor();
     this.stockService = new StockService();
     this.mfService = new MutualFundService();
+    
+    // Custom model instance for chat with market quote tools enabled
+    this.chatModel = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: {
+        temperature: 0.3,
+        topP: 0.8,
+        maxOutputTokens: 2048,
+      },
+      tools: [{
+        functionDeclarations: [getLiveMarketQuoteDeclaration]
+      }]
+    });
+  }
+
+  async executeLiveMarketQuote(assetName, assetType) {
+    try {
+      console.log(`Executing tool getLiveMarketQuote for ${assetName} (${assetType})`);
+      
+      if (assetType === 'gold') {
+        const goldUsd = await this.stockService.getStockPrice("GC=F");
+        const usdinrData = await this.stockService.getStockPrice("USDINR=X");
+        const usdRate = usdinrData.currentPrice || 83.5;
+        if (goldUsd && goldUsd.currentPrice) {
+          const goldPricePerGramUsd = goldUsd.currentPrice / 31.1034768;
+          const goldPricePer10gInr = goldPricePerGramUsd * 10 * usdRate;
+          return {
+            success: true,
+            asset: "Gold (24K, 10 grams)",
+            priceINR: Math.round(goldPricePer10gInr),
+            priceUSDPerOunce: goldUsd.currentPrice,
+            usdInrRate: usdRate,
+            dayChange: goldUsd.dayChange,
+            source: "Yahoo Finance (GC=F)"
+          };
+        }
+        return { success: false, error: "Gold price unavailable" };
+      }
+      
+      if (assetType === 'index') {
+        let symbol = "^NSEI";
+        if (assetName.toLowerCase().includes("sensex")) {
+          symbol = "^BSESN";
+        }
+        const data = await this.stockService.getStockPrice(symbol);
+        return {
+          success: true,
+          asset: symbol === "^NSEI" ? "Nifty 50" : "Sensex",
+          symbol,
+          currentPrice: data.currentPrice,
+          dayChange: data.dayChange,
+          previousClose: data.previousClose,
+          source: "Yahoo Finance"
+        };
+      }
+
+      if (assetType === 'mutual_fund') {
+        // First search for the fund code
+        const searchResults = await this.mfService.searchFund(assetName);
+        if (searchResults && searchResults.length > 0) {
+          const code = searchResults[0].schemeCode;
+          const data = await this.mfService.getFundData(code);
+          return {
+            success: true,
+            asset: data.fundName,
+            schemeCode: data.schemeCode,
+            category: data.category,
+            latestNAV: data.latestNAV,
+            navDate: data.navDate,
+            returns: data.returns,
+            source: "MFAPI.in"
+          };
+        }
+        // Fallback: look up popular funds key
+        const keys = Object.keys(this.mfService.popularFunds);
+        const matchKey = keys.find(k => k.toLowerCase().includes(assetName.toLowerCase()));
+        if (matchKey) {
+          const code = this.mfService.popularFunds[matchKey];
+          const data = await this.mfService.getFundData(code);
+          return {
+            success: true,
+            asset: data.fundName,
+            schemeCode: data.schemeCode,
+            category: data.category,
+            latestNAV: data.latestNAV,
+            navDate: data.navDate,
+            returns: data.returns,
+            source: "MFAPI.in"
+          };
+        }
+        return { success: false, error: `Mutual fund '${assetName}' not found` };
+      }
+
+      if (assetType === 'stock') {
+        let symbol = assetName.toUpperCase();
+        if (!symbol.includes(".NS")) {
+          symbol = `${symbol}.NS`;
+        }
+        const data = await this.stockService.getStockPrice(symbol);
+        if (data.error) {
+          return { success: false, error: data.error };
+        }
+        return {
+          success: true,
+          asset: data.symbol,
+          currentPrice: data.currentPrice,
+          dayChange: data.dayChange,
+          fiftyTwoWeekHigh: data.fiftyTwoWeekHigh,
+          fiftyTwoWeekLow: data.fiftyTwoWeekLow,
+          source: "Yahoo Finance"
+        };
+      }
+
+      return { success: false, error: "Invalid asset type" };
+    } catch (e) {
+      console.error("Error executing market quote tool:", e);
+      return { success: false, error: e.message };
+    }
   }
 
   // ══════════════════════════════════════════════
@@ -73,16 +271,63 @@ Based on the user's financial data and their message, provide helpful,
 specific financial advice. If they ask about investments, use the portfolio 
 data. If they ask about expenses, analyze spending patterns. 
 Always be actionable and specific with Indian financial products.
+You can use the getLiveMarketQuote tool to search for live market prices, gold rates, or mutual fund NAVs if they ask.
 
 Respond naturally as FRIDAY:
 `;
 
-      const result = await geminiModel.generateContent(prompt);
-      const response = result.response.text();
+      const genAIArgs = {
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        tools: [{
+          functionDeclarations: [getLiveMarketQuoteDeclaration]
+        }]
+      };
+
+      let result = await this.chatModel.generateContent(genAIArgs);
+      let responseText = "";
+
+      // Check for function calls
+      const functionCalls = result.response.functionCalls;
+      if (functionCalls && functionCalls.length > 0) {
+        const call = functionCalls[0];
+        console.log("Model requested tool call:", call.name, call.args);
+        
+        let toolResult;
+        if (call.name === "getLiveMarketQuote") {
+          toolResult = await this.executeLiveMarketQuote(call.args.assetName, call.args.assetType);
+        } else {
+          toolResult = { error: "Unknown tool" };
+        }
+
+        // Send function execution result back to Gemini
+        const followUpArgs = {
+          contents: [
+            { role: "user", parts: [{ text: prompt }] },
+            result.response.candidates[0].content, // model call response
+            {
+              role: "function",
+              parts: [{
+                functionResponse: {
+                  name: call.name,
+                  response: { result: toolResult }
+                }
+              }]
+            }
+          ],
+          tools: [{
+            functionDeclarations: [getLiveMarketQuoteDeclaration]
+          }]
+        };
+
+        const followUpResult = await this.chatModel.generateContent(followUpArgs);
+        responseText = followUpResult.response.text();
+      } else {
+        responseText = result.response.text();
+      }
 
       return {
         success: true,
-        message: response,
+        message: responseText,
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
@@ -517,6 +762,19 @@ Respond as FRIDAY:
         .lean(),
     ]);
 
+    const profile = user?.financialProfile || {};
+    const salary = lastSalary?.amount || profile.monthlySalary || 0;
+    
+    // Fixed & discretionary commitments
+    const emi = lastSalary?.allocation?.emi ?? profile.fixedExpenses?.emiDefault ?? 0;
+    const rent = lastSalary?.allocation?.rent ?? profile.fixedExpenses?.rent ?? 0;
+    const sip = lastSalary?.allocation?.sip ?? profile.sipDefault ?? 0;
+    const travel = lastSalary?.allocation?.travel ?? profile.travelDefault ?? 0;
+    const bills = lastSalary?.allocation?.bills ?? profile.billsDefault ?? 0;
+    
+    const totalAllocated = emi + rent + sip + travel + bills;
+    const availableBalance = salary - totalAllocated;
+
     // Calculate expense summary
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
@@ -542,26 +800,31 @@ Respond as FRIDAY:
     });
 
     return {
-      profile: user?.financialProfile || {},
       userName: user?.name || "Boss",
-      recentExpenses: recentExpenses.slice(0, 30), // Last 30 for context
+      monthlySalary: salary,
+      commitments: {
+        emi,
+        rent,
+        sip,
+        travel,
+        bills,
+        totalAllocated
+      },
+      availableBalance,
+      portfolio: {
+        totalInvested: investments.reduce((s, i) => s + i.investedAmount, 0),
+        totalCurrentValue: investments.reduce((s, i) => s + i.currentValue, 0),
+        holdings: investments.map((i) => ({
+          name: i.name,
+          type: i.type,
+          invested: i.investedAmount,
+          current: i.currentValue,
+          gainAmount: i.returns?.absolute || (i.currentValue - i.investedAmount),
+          gainPercent: i.returns?.percentage || (i.investedAmount > 0 ? (((i.currentValue - i.investedAmount) / i.investedAmount) * 100) : 0),
+        }))
+      },
       expenseSummary,
-      investments: investments.map((i) => ({
-        name: i.name,
-        type: i.type,
-        invested: i.investedAmount,
-        current: i.currentValue,
-        returns: i.returns,
-      })),
-      lastSalary: lastSalary
-        ? {
-            amount: lastSalary.amount,
-            month: lastSalary.month,
-            allocation: lastSalary.allocation,
-          }
-        : null,
-      totalInvested: investments.reduce((s, i) => s + i.investedAmount, 0),
-      totalCurrentValue: investments.reduce((s, i) => s + i.currentValue, 0),
+      recentExpenses: recentExpenses.slice(0, 20),
     };
   }
 }

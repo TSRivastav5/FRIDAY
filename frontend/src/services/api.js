@@ -117,8 +117,8 @@ class FridayAPI {
   getCurrentSalary() {
     return this.get("/salary/current");
   }
-  updateAllocation(id, allocation) {
-    return this.put(`/salary/${id}/allocation`, { allocation });
+  updateAllocation(id, allocation, paidAllocations) {
+    return this.put(`/salary/${id}/allocation`, { allocation, paidAllocations });
   }
 
   // Expenses
@@ -146,8 +146,14 @@ class FridayAPI {
   updateInvestment(id, data) {
     return this.put(`/investments/${id}`, data);
   }
+  deleteInvestment(id) {
+    return this.del(`/investments/${id}`);
+  }
   clearAllInvestments() {
     return this.del("/investments/clear/all-assets");
+  }
+  syncGrowwPortfolio() {
+    return this.post("/investments/sync-groww");
   }
   getMarketQuote(symbol) {
     return this.get(`/investments/market/quote/${symbol}`);

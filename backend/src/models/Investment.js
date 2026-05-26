@@ -25,7 +25,9 @@ const investmentSchema = new mongoose.Schema(
         "Equity",
         "Debt",
         "Hybrid",
-        "Cash"
+        "Cash",
+        "Liquid",
+        "Gold"
       ],
     },
     platform: { type: String, default: "groww" },

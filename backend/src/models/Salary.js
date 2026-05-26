@@ -25,6 +25,8 @@ const salarySchema = new mongoose.Schema(
       remaining: { type: Number, default: 0 },
     },
 
+    paidAllocations: { type: [String], default: [] }, // E.g., ["emi", "rent"]
+
     // AI Analysis (saved for history)
     aiAnalysis: {
       greeting: String,

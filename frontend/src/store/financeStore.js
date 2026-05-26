@@ -50,6 +50,8 @@ export const useFinanceStore = create(
       isChatOpen: false,
       isChatLoading: false,
       aiInsight: null,
+      preloadedAiMessage: null,
+      setPreloadedAiMessage: (msg) => set({ preloadedAiMessage: msg }),
 
       // ──────── Allocation ────────
       currentAllocation: null,
@@ -180,6 +182,35 @@ export const useFinanceStore = create(
 
           localStorage.setItem("friday_user", JSON.stringify(profileData.user));
           return profileData;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      updateSalaryAllocation: async (salaryId, allocation, paidAllocations) => {
+        set({ isLoading: true, error: null });
+        try {
+          const res = await fridayAPI.updateAllocation(salaryId, allocation, paidAllocations);
+          if (res.success && res.salary) {
+            // Update local salary state if it's the current active salary
+            const currentSalary = get().salary;
+            if (currentSalary && currentSalary._id === salaryId) {
+              set({ 
+                salary: res.salary,
+                currentAllocation: res.salary.allocation 
+              });
+            }
+            
+            // Also update the record in the salaryHistory list
+            const updatedHistory = get().salaryHistory.map(s => 
+              s._id === salaryId ? res.salary : s
+            );
+            set({ salaryHistory: updatedHistory, isLocked: false }); // Reset lock if applicable, keep history updated
+            set({ salaryHistory: updatedHistory, isLoading: false });
+          } else {
+            set({ isLoading: false });
+          }
         } catch (error) {
           set({ error: error.message, isLoading: false });
           throw error;
@@ -375,6 +406,32 @@ export const useFinanceStore = create(
         }
       },
 
+      deleteInvestment: async (id) => {
+        set({ isLoading: true, error: null });
+        try {
+          await fridayAPI.deleteInvestment(id);
+          set(state => ({
+            investments: state.investments.filter(i => i._id !== id),
+            isLoading: false
+          }));
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      syncGrowwPortfolio: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          await fridayAPI.syncGrowwPortfolio();
+          await get().fetchInvestments();
+          set({ isLoading: false });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
       // AI Chat
       chatWithFriday: async (message) => {
         set({ isChatLoading: true });
@@ -382,13 +439,40 @@ export const useFinanceStore = create(
         
         try {
           const data = await fridayAPI.chatWithFriday(message);
-          get().addChatMessage("assistant", data.response);
+          const aiResponse = data.message || data.response || "Sorry boss, I couldn't generate a response.";
+          get().addChatMessage("assistant", aiResponse);
           set({ isChatLoading: false });
           return data;
         } catch (error) {
           get().addChatMessage("assistant", "Sorry boss, I encountered an issue. Please try again.");
           set({ isChatLoading: false });
           throw error;
+        }
+      },
+
+      fetchChatHistory: async () => {
+        set({ isChatLoading: true });
+        try {
+          const data = await fridayAPI.getChatHistory();
+          if (data.success && data.history) {
+            // Sort history sessions chronologically (oldest session first)
+            const sortedHistory = [...data.history].reverse();
+            // Flatten all messages from the sessions
+            const flattened = sortedHistory.reduce((acc, session) => {
+              const msgs = (session.messages || []).map(m => ({
+                role: m.role,
+                content: m.content,
+                timestamp: m.timestamp || session.createdAt
+              }));
+              return acc.concat(msgs);
+            }, []);
+            set({ chatMessages: flattened, isChatLoading: false });
+          } else {
+            set({ isChatLoading: false });
+          }
+        } catch (error) {
+          console.error("Failed to fetch chat history:", error);
+          set({ isChatLoading: false });
         }
       },
 
