@@ -145,6 +145,16 @@ router.get("/portfolio-review", async (req, res) => {
   }
 });
 
+// 💡 Telemetry Insight
+router.get("/telemetry-insight", async (req, res) => {
+  try {
+    const insight = await agent.getTelemetryInsight(req.user.id);
+    res.json(insight);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 📜 Chat History
 router.get("/chat-history", async (req, res) => {
   try {

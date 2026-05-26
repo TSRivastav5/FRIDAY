@@ -456,6 +456,52 @@ Be direct and specific. Boss wants actionable advice.
   }
 
   // ══════════════════════════════════════════════
+  // 💡 Get Telemetry Insight (Powered by Gemini)
+  // ══════════════════════════════════════════════
+  async getTelemetryInsight(userId) {
+    try {
+      const context = await this._getUserContext(userId);
+
+      const prompt = `
+${FRIDAY_PERSONA}
+
+## Task: Financial Telemetry Insight
+Generate a single-line financial tip or insight using the Boss's financial telemetry.
+
+## User Context:
+${JSON.stringify(context, null, 2)}
+
+## Instructions:
+1. Provide a single, personalized, actionable financial tip or insight in Indian financial context (INR).
+2. It should be concise (around 15-25 words).
+3. Focus on savings, investing, or optimization based on their actual numbers.
+4. Format: Plain text. Do NOT use markdown bolding (like **) or JSON formatting. Just return a single clean sentence.
+
+Respond as FRIDAY:
+`;
+
+      const result = await geminiModel.generateContent(prompt);
+      let insight = result.response.text().trim();
+
+      // Clean up markdown/formatting
+      insight = insight.replace(/\*\*/g, "").replace(/`/g, "").trim();
+
+      return {
+        success: true,
+        insight,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error("Telemetry Insight Error:", error.message);
+      return {
+        success: false,
+        insight: "Your ELSS SIP is up 14.2% YTD. Consider increasing by ₹500 — it saves you tax under Sec 80C, Boss.",
+        error: error.message,
+      };
+    }
+  }
+
+  // ══════════════════════════════════════════════
   // 🔧 Get User Context (Used by all methods)
   // ══════════════════════════════════════════════
   async _getUserContext(userId) {

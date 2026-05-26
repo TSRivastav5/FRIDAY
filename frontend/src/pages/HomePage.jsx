@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
 import { GoalTracker } from '../components/GoalTracker';
@@ -7,13 +7,20 @@ export const HomePage = () => {
   const store = useFinanceStore();
   const userName = store.user?.name || "Rahul";
   
-  // Calculate dynamic values
-  const totalSalary = store.salary?.amount || 0;
-  const emi = store.currentAllocation?.emi ?? 0;
-  const sip = store.currentAllocation?.sip ?? 0;
-  const rent = store.currentAllocation?.rent ?? 0;
-  const travel = store.currentAllocation?.travel ?? 0;
-  const bills = store.currentAllocation?.bills ?? 0;
+  // Fetch telemetry insight on mount
+  useEffect(() => {
+    store.fetchTelemetryInsight?.();
+  }, []);
+  
+  // Calculate dynamic values with default fallback to settings/profile
+  const profile = store.user?.financialProfile || {};
+  const totalSalary = store.salary?.amount || profile.monthlySalary || 0;
+  
+  const emi = store.currentAllocation?.emi ?? profile.fixedExpenses?.emiDefault ?? 0;
+  const rent = store.currentAllocation?.rent ?? profile.fixedExpenses?.rent ?? 0;
+  const sip = store.currentAllocation?.sip ?? profile.sipDefault ?? 0;
+  const travel = store.currentAllocation?.travel ?? profile.travelDefault ?? 0;
+  const bills = store.currentAllocation?.bills ?? profile.billsDefault ?? 0;
   
   const totalAllocated = emi + sip + rent + travel + bills;
   const availableBalance = totalSalary - totalAllocated;
@@ -33,6 +40,7 @@ export const HomePage = () => {
     
     try {
       await store.creditSalary(amount);
+      store.fetchTelemetryInsight?.();
       setTimeout(() => {
         setCreditStatus('credited');
         store.setSalaryModal(true);
@@ -44,6 +52,33 @@ export const HomePage = () => {
       setCreditStatus('input');
     }
   };
+
+  // Determine dynamic month/date context
+  const today = new Date();
+  const monthName = today.toLocaleString('default', { month: 'long' });
+  const year = today.getFullYear();
+  const isSalaryCredited = !!store.salary?.amount;
+  const salaryStatusText = isSalaryCredited
+    ? `Salary ${formatCurrency(totalSalary)} credited`
+    : `Salary pending`;
+
+  // EMI due / overdue badge calculations
+  const hasPaidEmiThisMonth = store.expenses?.some(exp => {
+    const expDate = new Date(exp.date);
+    const isThisMonth = expDate.getFullYear() === today.getFullYear() && expDate.getMonth() === today.getMonth();
+    const isEmi = exp.category?.toLowerCase() === 'bills' && /emi/i.test(exp.description || '');
+    return isThisMonth && isEmi;
+  });
+
+  const salaryDay = profile.salaryDay || 1;
+  let emiBadge = null;
+  if (emi > 0 && !hasPaidEmiThisMonth) {
+    if (today.getDate() === salaryDay) {
+      emiBadge = "Due today";
+    } else if (today.getDate() > salaryDay) {
+      emiBadge = "Overdue";
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background text-on-background font-body antialiased flex flex-col pb-32">
@@ -72,13 +107,15 @@ export const HomePage = () => {
       {/* Hero Balance Section */}
       <section className="bg-inverse-surface px-5 pt-4 pb-12 rounded-b-[40px] shadow-sm text-left">
         <div className="max-w-7xl mx-auto">
-          <p className="text-on-primary/80 text-[11px] font-semibold uppercase tracking-wider mb-1">Available balance</p>
+          <p className="text-on-primary/80 text-[11px] font-semibold uppercase tracking-wider mb-1">
+            {monthName} {year} · {salaryStatusText}
+          </p>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="text-on-primary text-4xl font-semibold tracking-tighter">{formatCurrency(availableBalance)}</span>
           </div>
           <div className="flex items-center gap-2 text-tertiary-fixed-dim">
             <span className="material-symbols-outlined text-sm">trending_up</span>
-            <span className="text-xs">After all commitments</span>
+            <span className="text-xs">Available balance after commitments</span>
           </div>
         </div>
       </section>
@@ -87,51 +124,116 @@ export const HomePage = () => {
       <main className="flex-grow px-5 -mt-6 max-w-7xl mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
           {/* Card 1: EMI */}
-          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
-            <div className="w-8 h-8 rounded-lg bg-[#FFB038]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined" style={{color:'#92600A'}}>receipt_long</span>
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col aspect-square justify-between active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="flex flex-col gap-2 text-left w-full">
+              <div className="flex justify-between items-center w-full">
+                <div className="w-8 h-8 rounded-lg bg-[#FFB038]/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined" style={{color:'#92600A'}}>receipt_long</span>
+                </div>
+                {emiBadge && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 border border-orange-200 animate-pulse">
+                    {emiBadge}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-0.5">EMI DUE</p>
+                <p className="text-xl font-bold text-on-surface">
+                  {emi > 0 ? (
+                    formatCurrency(emi)
+                  ) : (
+                    <span 
+                      className="text-sm font-bold text-primary cursor-pointer hover:underline"
+                      onClick={() => store.setSalaryModal(true)}
+                    >
+                      Set up →
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">EMI DUE</p>
-              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(emi)}</p>
-              {/* #92600A passes AA (4.68:1) on white */}
+            <div className="text-left mt-auto">
               <p className="text-xs font-semibold" style={{color:'#92600A'}}>Active commitments</p>
             </div>
           </div>
 
           {/* Card 2: SIP */}
-          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
-            <div className="w-8 h-8 rounded-lg bg-[#34C759]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined" style={{color:'#1A7A36'}}>eco</span>
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col aspect-square justify-between active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="flex flex-col gap-2 text-left w-full">
+              <div className="w-8 h-8 rounded-lg bg-[#34C759]/10 flex items-center justify-center">
+                <span className="material-symbols-outlined" style={{color:'#1A7A36'}}>eco</span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-0.5">SIP THIS MONTH</p>
+                <p className="text-xl font-bold text-on-surface">
+                  {sip > 0 ? (
+                    formatCurrency(sip)
+                  ) : (
+                    <span 
+                      className="text-sm font-bold text-primary cursor-pointer hover:underline"
+                      onClick={() => store.setSalaryModal(true)}
+                    >
+                      Set up →
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">SIP THIS MONTH</p>
-              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(sip)}</p>
-              {/* #1A7A36 passes AA (5.12:1) on white */}
+            <div className="text-left mt-auto">
               <p className="text-xs font-semibold" style={{color:'#1A7A36'}}>Auto on 5th</p>
             </div>
           </div>
 
           {/* Card 3: Rent */}
-          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
-            <div className="w-8 h-8 rounded-lg bg-[#5856D6]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined text-[#5856D6]">home</span>
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col aspect-square justify-between active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="flex flex-col gap-2 text-left w-full">
+              <div className="w-8 h-8 rounded-lg bg-[#5856D6]/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[#5856D6]">home</span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-0.5">RENT</p>
+                <p className="text-xl font-bold text-on-surface">
+                  {rent > 0 ? (
+                    formatCurrency(rent)
+                  ) : (
+                    <span 
+                      className="text-sm font-bold text-primary cursor-pointer hover:underline"
+                      onClick={() => store.setSalaryModal(true)}
+                    >
+                      Set up →
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">RENT</p>
-              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(rent)}</p>
-              <p className="text-xs text-on-surface-variant">Paid • 1st</p>
+            <div className="text-left mt-auto">
+              <p className="text-xs text-on-surface-variant">Paid · 1st</p>
             </div>
           </div>
 
           {/* Card 4: Travel */}
-          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
-            <div className="w-8 h-8 rounded-lg bg-[#FF2D55]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined text-[#FF2D55]">directions_car</span>
+          <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col aspect-square justify-between active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
+            <div className="flex flex-col gap-2 text-left w-full">
+              <div className="w-8 h-8 rounded-lg bg-[#FF2D55]/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[#FF2D55]">directions_car</span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-0.5">TRAVEL</p>
+                <p className="text-xl font-bold text-on-surface">
+                  {travel > 0 ? (
+                    formatCurrency(travel)
+                  ) : (
+                    <span 
+                      className="text-sm font-bold text-primary cursor-pointer hover:underline"
+                      onClick={() => store.setSalaryModal(true)}
+                    >
+                      Set up →
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">TRAVEL</p>
-              <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(travel)}</p>
+            <div className="text-left mt-auto">
               <p className="text-xs text-on-surface-variant">Budget set</p>
             </div>
           </div>
@@ -144,7 +246,7 @@ export const HomePage = () => {
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-sm text-on-surface leading-relaxed">
-              Your ELSS SIP is up <span className="font-bold text-tertiary">14.2% YTD</span>. Consider increasing by ₹500 — it costs you ₹150/month less in tax.
+              {store.aiInsight || "Analyzing your financial telemetry to deliver personalized insights... Hang tight Boss! 🤖"}
             </p>
           </div>
           {/* Decorative atmospheric light */}

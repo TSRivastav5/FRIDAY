@@ -169,6 +169,9 @@ class FridayAPI {
   getChatHistory() {
     return this.get("/ai/chat-history");
   }
+  getTelemetryInsight() {
+    return this.get("/ai/telemetry-insight");
+  }
 
   // Family
   addFamilyMember(data) {

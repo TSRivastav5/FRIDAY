@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema(
       // Fixed Monthly Commitments
       fixedExpenses: {
         rent: { type: Number, default: 0 },
+        emiDefault: { type: Number, default: 0 },
         emis: [
           {
             name: String,
@@ -47,6 +48,10 @@ const userSchema = new mongoose.Schema(
         insurance: { type: Number, default: 0 },
         subscriptions: { type: Number, default: 0 },
       },
+
+      sipDefault: { type: Number, default: 0 },
+      travelDefault: { type: Number, default: 0 },
+      billsDefault: { type: Number, default: 0 },
 
       // Emergency Fund
       emergencyFund: {

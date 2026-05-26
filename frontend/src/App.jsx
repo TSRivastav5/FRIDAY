@@ -88,8 +88,9 @@ function App() {
     );
   }
 
-  // 3. Forced onboarding wizard for first-time users (no salary created)
-  if (!store.salary) {
+  // 3. Forced onboarding wizard for first-time users (no salary created and no profile setup done)
+  const hasOnboarded = store.user?.financialProfile?.monthlySalary > 0;
+  if (!store.salary && !hasOnboarded) {
     return <OnboardingWizard />;
   }
 

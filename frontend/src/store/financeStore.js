@@ -49,6 +49,7 @@ export const useFinanceStore = create(
       chatMessages: [],
       isChatOpen: false,
       isChatLoading: false,
+      aiInsight: null,
 
       // ──────── Allocation ────────
       currentAllocation: null,
@@ -150,14 +151,35 @@ export const useFinanceStore = create(
         try {
           const state = get();
           const id = state.salary?._id;
-          if (!id) {
-            // Handled locally if there's no backend salary record yet
-            set({ currentAllocation: allocation, isLoading: false });
-            return;
+          
+          if (id) {
+            await fridayAPI.updateAllocation(id, allocation);
           }
-          const data = await fridayAPI.updateAllocation(id, allocation);
-          set({ currentAllocation: allocation, isLoading: false });
-          return data;
+
+          // Sync rules to user's financialProfile so they are persisted on the server
+          const updatedProfile = {
+            ...state.user?.financialProfile,
+            monthlySalary: allocation.salary || state.user?.financialProfile?.monthlySalary || 0,
+            fixedExpenses: {
+              ...state.user?.financialProfile?.fixedExpenses,
+              rent: allocation.rent,
+              emiDefault: allocation.emi,
+            },
+            sipDefault: allocation.sip,
+            travelDefault: allocation.travel,
+            billsDefault: allocation.bills,
+          };
+
+          const profileData = await fridayAPI.updateProfile(updatedProfile);
+          
+          set({
+            currentAllocation: allocation,
+            user: profileData.user,
+            isLoading: false,
+          });
+
+          localStorage.setItem("friday_user", JSON.stringify(profileData.user));
+          return profileData;
         } catch (error) {
           set({ error: error.message, isLoading: false });
           throw error;
@@ -367,6 +389,17 @@ export const useFinanceStore = create(
           get().addChatMessage("assistant", "Sorry boss, I encountered an issue. Please try again.");
           set({ isChatLoading: false });
           throw error;
+        }
+      },
+
+      fetchTelemetryInsight: async () => {
+        try {
+          const data = await fridayAPI.getTelemetryInsight();
+          if (data.success) {
+            set({ aiInsight: data.insight });
+          }
+        } catch (error) {
+          console.error("Failed to fetch telemetry insight:", error);
         }
       },
 
