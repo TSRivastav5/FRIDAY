@@ -97,12 +97,23 @@ router.get("/", async (req, res) => {
       isActive: true,
     }).sort({ updatedAt: -1 });
 
+    // Update each active investment in real-time in parallel
+    await Promise.allSettled(
+      investments.map((i) => updateInvestmentRealTime(i))
+    );
+
+    // Re-fetch investments to get the updated values from DB
+    const updatedInvestments = await Investment.find({
+      userId: req.user.id,
+      isActive: true,
+    }).sort({ updatedAt: -1 });
+
     const stats = {
-      totalInvested: investments.reduce(
+      totalInvested: updatedInvestments.reduce(
         (s, i) => s + i.investedAmount,
         0
       ),
-      currentValue: investments.reduce(
+      currentValue: updatedInvestments.reduce(
         (s, i) => s + i.currentValue,
         0
       ),
@@ -113,7 +124,7 @@ router.get("/", async (req, res) => {
         ? ((stats.totalGain / stats.totalInvested) * 100).toFixed(2)
         : 0;
 
-    res.json({ success: true, investments, stats });
+    res.json({ success: true, investments: updatedInvestments, stats });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -213,6 +224,171 @@ async function fetchYahooQuote(symbol) {
   }
 
   throw new Error("All Yahoo Finance endpoints returned rate-limit or empty responses. Try again in a minute.");
+}
+
+// ── Helper functions for Real-time portfolio calculation ────────────────────
+function cleanSearchName(name) {
+  if (!name) return "";
+  return name
+    .replace(/commercial/gi, "")
+    .replace(/direct/gi, "")
+    .replace(/growth/gi, "")
+    .replace(/ltd/gi, "")
+    .replace(/limited/gi, "")
+    .replace(/corp/gi, "")
+    .replace(/corporation/gi, "")
+    .replace(/mutual/gi, "")
+    .replace(/fund/gi, "")
+    .replace(/equity/gi, "")
+    .replace(/debt/gi, "")
+    .replace(/liquid/gi, "")
+    .replace(/hybrid/gi, "")
+    .replace(/-g/gi, "")
+    .replace(/- g/gi, "")
+    .replace(/[\(\)]/g, "")
+    .trim();
+}
+
+async function resolveAssetIdentifier(name, category, type) {
+  const cleaned = cleanSearchName(name);
+  const isStock = type?.toLowerCase() === "stock" || 
+                  category?.toLowerCase() === "equity" && (name.toLowerCase().includes("stock") || !name.toLowerCase().includes("fund"));
+  
+  if (isStock) {
+    try {
+      const response = await fetch(`https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(cleaned)}`, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const quote = data.quotes?.find(q => q.quoteType === "EQUITY" && (q.exchange === "NSI" || q.exchange === "BSE" || q.symbol.endsWith(".NS")));
+        if (quote) {
+          return { symbol: quote.symbol, type: "stock" };
+        }
+      }
+    } catch (e) {
+      console.warn(`[Resolve] Stock lookup failed for ${cleaned}:`, e.message);
+    }
+  } else {
+    // Treat as mutual fund
+    try {
+      const response = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(cleaned)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.length > 0) {
+          return { schemeCode: data[0].schemeCode, type: "mutual_fund" };
+        }
+      }
+    } catch (e) {
+      console.warn(`[Resolve] MF lookup failed for ${cleaned}:`, e.message);
+    }
+  }
+  return null;
+}
+
+async function getHistoricalStockPrice(symbol, date) {
+  try {
+    const d = new Date(date);
+    const startSecs = Math.floor(d.getTime() / 1000) - 86400 * 4;
+    const endSecs = Math.floor(d.getTime() / 1000) + 86400 * 4;
+    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${startSecs}&period2=${endSecs}&interval=1d`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const result = data.chart?.result?.[0];
+    if (result && result.indicators?.quote?.[0]?.close) {
+      const closes = result.indicators.quote[0].close;
+      const price = closes.find(p => p !== null && p !== undefined);
+      return price || null;
+    }
+  } catch (e) {
+    console.warn(`[Historical] Stock price lookup failed for ${symbol} on ${date}:`, e.message);
+  }
+  return null;
+}
+
+async function updateInvestmentRealTime(investment) {
+  try {
+    let identifierType = null; // "stock" or "mutual_fund"
+    let identifierValue = null; // symbol or schemeCode
+    
+    if (investment.stockDetails?.symbol) {
+      identifierType = "stock";
+      identifierValue = investment.stockDetails.symbol;
+    } else if (investment.mfDetails?.schemeCode) {
+      identifierType = "mutual_fund";
+      identifierValue = investment.mfDetails.schemeCode;
+    } else {
+      const res = await resolveAssetIdentifier(investment.name, investment.type, investment.type);
+      if (res) {
+        identifierType = res.type;
+        identifierValue = res.symbol || res.schemeCode;
+        if (res.type === "stock") {
+          investment.stockDetails = { ...investment.stockDetails, symbol: res.symbol };
+        } else {
+          investment.mfDetails = { ...investment.mfDetails, schemeCode: res.schemeCode };
+        }
+      }
+    }
+    
+    if (identifierType && identifierValue) {
+      let currentPrice = null;
+      let purchasePrice = null;
+      
+      const purchaseDate = investment.sipDetails?.startDate || investment.createdAt || new Date();
+      
+      if (identifierType === "stock") {
+        const quote = await fetchYahooQuote(identifierValue);
+        if (quote && quote.currentPrice) {
+          currentPrice = quote.currentPrice;
+          purchasePrice = await getHistoricalStockPrice(identifierValue, purchaseDate);
+        }
+      } else {
+        const response = await fetch(`https://api.mfapi.in/mf/${identifierValue}`);
+        if (response.ok) {
+          const data = await response.json();
+          const navData = data.data;
+          if (navData && navData.length > 0) {
+            currentPrice = parseFloat(navData[0].nav);
+            
+            const targetTime = new Date(purchaseDate).getTime();
+            let minDiff = Infinity;
+            for (const entry of navData) {
+              const parts = entry.date.split("-");
+              const entryTime = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+              const diff = Math.abs(entryTime - targetTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                purchasePrice = parseFloat(entry.nav);
+              }
+            }
+          }
+        }
+      }
+      
+      if (currentPrice && purchasePrice && purchasePrice > 0) {
+        const ratio = currentPrice / purchasePrice;
+        investment.currentValue = Math.round(investment.investedAmount * ratio);
+        const absolute = investment.currentValue - investment.investedAmount;
+        const percentage = parseFloat(((absolute / investment.investedAmount) * 100).toFixed(2));
+        investment.returns = { absolute, percentage };
+        
+        await Investment.findByIdAndUpdate(investment._id, {
+          stockDetails: investment.stockDetails,
+          mfDetails: investment.mfDetails,
+          currentValue: investment.currentValue,
+          returns: investment.returns
+        });
+      }
+    }
+  } catch (e) {
+    console.error(`Error updating investment ${investment.name} in real-time:`, e.message);
+  }
 }
 
 // Get market quote for a symbol (free Yahoo Finance lookup) with caching
