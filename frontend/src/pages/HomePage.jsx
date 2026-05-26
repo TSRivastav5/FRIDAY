@@ -25,6 +25,11 @@ export const HomePage = () => {
   const totalAllocated = emi + sip + rent + travel + bills;
   const availableBalance = totalSalary - totalAllocated;
 
+  const handleSetUpRedirect = (subScreen) => {
+    localStorage.setItem('friday_redirect_subscreen', subScreen);
+    store.setActiveTab('profile');
+  };
+
   const showSalaryModal = store.showSalaryModal || false;
 
 
@@ -120,7 +125,7 @@ export const HomePage = () => {
                   ) : (
                     <span 
                       className="text-sm font-bold text-primary cursor-pointer hover:underline"
-                      onClick={() => store.setSalaryModal(true)}
+                      onClick={() => handleSetUpRedirect('emi')}
                     >
                       Set up →
                     </span>
@@ -147,7 +152,7 @@ export const HomePage = () => {
                   ) : (
                     <span 
                       className="text-sm font-bold text-primary cursor-pointer hover:underline"
-                      onClick={() => store.setSalaryModal(true)}
+                      onClick={() => handleSetUpRedirect('sip')}
                     >
                       Set up →
                     </span>
@@ -174,7 +179,7 @@ export const HomePage = () => {
                   ) : (
                     <span 
                       className="text-sm font-bold text-primary cursor-pointer hover:underline"
-                      onClick={() => store.setSalaryModal(true)}
+                      onClick={() => handleSetUpRedirect('salary')}
                     >
                       Set up →
                     </span>
@@ -201,7 +206,7 @@ export const HomePage = () => {
                   ) : (
                     <span 
                       className="text-sm font-bold text-primary cursor-pointer hover:underline"
-                      onClick={() => store.setSalaryModal(true)}
+                      onClick={() => handleSetUpRedirect('budget')}
                     >
                       Set up →
                     </span>

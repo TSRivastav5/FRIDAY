@@ -135,6 +135,11 @@ export const ExpensesPage = () => {
     }
   };
 
+  const handleSetUpRedirect = (subScreen) => {
+    localStorage.setItem('friday_redirect_subscreen', subScreen);
+    store.setActiveTab('profile');
+  };
+
   // Convert "2026-05" database string into readable long dates (e.g. "May 2026")
   const getMonthYearString = (monthStr) => {
     if (!monthStr) return "";
@@ -357,7 +362,7 @@ export const ExpensesPage = () => {
                       <div className="flex items-center gap-1.5 text-right min-w-0 flex-grow justify-end">
                         {!isConfigured ? (
                           <span className="text-xs text-on-surface-variant font-medium whitespace-nowrap">
-                            Not set · <button onClick={() => store.setActiveTab('profile')} className="text-primary font-bold hover:underline">Set up →</button>
+                            Not set · <button onClick={() => handleSetUpRedirect(key === 'rent' ? 'salary' : key === 'bills' ? 'budget' : key)} className="text-primary font-bold hover:underline">Set up →</button>
                           </span>
                         ) : isPaid ? (
                           <span className="text-xs font-bold text-[#34C759] bg-[#34C759]/10 px-2.5 py-0.5 rounded-full whitespace-nowrap">

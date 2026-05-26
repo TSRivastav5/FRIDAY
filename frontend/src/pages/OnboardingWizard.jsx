@@ -56,6 +56,7 @@ export const OnboardingWizard = () => {
       
       // 2. Update allocation presets
       await store.updateAllocation({
+        salary: parsedSalary,
         emi,
         rent,
         bills,

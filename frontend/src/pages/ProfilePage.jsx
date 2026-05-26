@@ -142,6 +142,7 @@ export const ProfilePage = () => {
   const [salDay, setSalDay] = useState(1);
   const [salBank, setSalBank] = useState('');
   const [salAutoSplit, setSalAutoSplit] = useState(true);
+  const [salRent, setSalRent] = useState('');
 
   // EMI setup sub-screen fields
   const [emiLabel, setEmiLabel] = useState('');
@@ -170,6 +171,7 @@ export const ProfilePage = () => {
       setSalDay(prof.salaryDay || 1);
       setSalBank(prof.bankAccount || 'HDFC Bank');
       setSalAutoSplit(prof.autoSplit !== false);
+      setSalRent(prof.fixedExpenses?.rent || '');
       setBudTravel(prof.travelDefault || '');
       setBudBills(prof.billsDefault || '');
     }
@@ -179,6 +181,15 @@ export const ProfilePage = () => {
   useEffect(() => {
     store.fetchInvestments?.();
   }, []);
+
+  // Check for redirects from dashboard setup links
+  useEffect(() => {
+    const redirectSub = localStorage.getItem('friday_redirect_subscreen');
+    if (redirectSub) {
+      setActiveSubScreen(redirectSub);
+      localStorage.removeItem('friday_redirect_subscreen');
+    }
+  }, [store.activeTab]);
 
   // Sync permissions on mount
   useEffect(() => {
@@ -337,6 +348,10 @@ export const ProfilePage = () => {
         salaryDay: parseInt(salDay, 10),
         bankAccount: salBank || 'HDFC Bank',
         autoSplit: salAutoSplit,
+        fixedExpenses: {
+          ...profile.fixedExpenses,
+          rent: parseFloat(salRent) || 0,
+        }
       };
       await store.updateProfile(updatedProfile);
       alert("Salary rules saved successfully!");
@@ -1122,7 +1137,7 @@ export const ProfilePage = () => {
         )}
       </AnimatePresence>
 
-      {/* ─── SLIDE-OVER SUB-SCREENS ─────────────────────────────────────────── */}
+      {/* ─── SLIDE-OVER SUB-SCREEN ─────────────────────────────────────────── */}
       <AnimatePresence>
         {/* 1. Salary Rules Sub-screen */}
         {activeSubScreen === 'salary' && (
@@ -1152,6 +1167,20 @@ export const ProfilePage = () => {
                       placeholder="e.g. 75000"
                       className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
                       required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly House Rent (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={salRent}
+                      onChange={(e) => setSalRent(e.target.value)}
+                      placeholder="e.g. 15000"
+                      className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
                     />
                   </div>
                 </div>
