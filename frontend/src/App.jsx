@@ -84,7 +84,7 @@ function App() {
     return (
       <div className="fixed inset-0 bg-[#0d1326] text-white flex flex-col justify-center items-center gap-4 z-[250]">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs text-white/50 uppercase tracking-widest font-semibold animate-pulse">Initializing FinVault Protocols...</p>
+        <p className="text-xs text-white/50 uppercase tracking-widest font-semibold animate-pulse">Initializing FRIDAY Protocols...</p>
       </div>
     );
   }

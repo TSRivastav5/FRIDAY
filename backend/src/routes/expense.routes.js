@@ -46,8 +46,8 @@ router.post("/", async (req, res) => {
     const cat = expense.category || "General";
     await sendPushToUser(req.user.id, {
       title: `💸 Spend Logged — ${cat}`,
-      body: `${fmt(expense.amount)} tracked under ${cat}. Check your surplus on FinVault.`,
-      icon: "/icon-192.png",
+      body: `${fmt(expense.amount)} tracked under ${cat}. Check your surplus on FRIDAY.`,
+      icon: "/logo.svg",
       tag: `expense-${expense._id}`,
       url: "/expenses",
     });

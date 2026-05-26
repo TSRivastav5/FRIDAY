@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finvault-cache-v1';
+const CACHE_NAME = 'friday-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -51,19 +51,19 @@ self.addEventListener('push', (event) => {
     data = event.data.json();
   } catch {
     data = {
-      title: 'FinVault',
+      title: 'FRIDAY',
       body: event.data.text(),
-      icon: '/icon-192.png',
-      tag: 'finvault',
+      icon: '/logo.svg',
+      tag: 'friday',
       url: '/',
     };
   }
 
   const options = {
     body: data.body,
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: data.tag || 'finvault',
+    icon: data.icon || '/logo.svg',
+    badge: '/logo.svg',
+    tag: data.tag || 'friday',
     renotify: true,
     requireInteraction: false,
     vibrate: [200, 100, 200],
@@ -71,7 +71,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'FinVault', options)
+    self.registration.showNotification(data.title || 'FRIDAY', options)
   );
 });
 
@@ -84,7 +84,7 @@ self.addEventListener('notificationclick', (event) => {
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((windowClients) => {
-        // Focus existing FinVault tab if one is open
+        // Focus existing FRIDAY tab if one is open
         for (const client of windowClients) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.navigate(targetUrl);

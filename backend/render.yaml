@@ -19,4 +19,4 @@
       - key: VAPID_PRIVATE_KEY
         sync: false
       - key: VAPID_EMAIL
-        value: mailto:admin@finvault.app
+        value: mailto:admin@friday.ai

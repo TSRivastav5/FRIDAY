@@ -147,7 +147,7 @@ export const InvestmentsPage = () => {
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCX0xxkFY5XGvL5V1FBPkkAaob4937P2y3M3RJ9DbQw74sTgyAIlMOn1k20oEXYFkIg2PYiGAuiJWdIDYV6Ck-Q-3JwGIPTdzuFxNQE3FJsVTZQSpdtf_OhiVn352t4iBrRsH7I0bOnJxjE0JQNJKikbRdAvqj4cBomb0_BJQmvg6pvu415tFBoXMifvBPFv5WMN6jc-cTXO9KDF3xcRnOuU1vINj9JwAMNSbisVTYlFURbT4qm8vB-iBCV4AnXkE0RVr8VW-hoJ0"
               />
             </div>
-            <h1 className="text-lg font-bold text-on-primary text-left">FinVault</h1>
+            <h1 className="text-lg font-bold text-on-primary text-left">FRIDAY</h1>
           </div>
           <button className="text-on-primary opacity-70 hover:opacity-100 transition-all">
             <span className="material-symbols-outlined">notifications</span>

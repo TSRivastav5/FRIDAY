@@ -66,7 +66,7 @@ export const AskAiPage = () => {
         {/* Welcome / Contextual Message */}
         <div className="mb-6 flex flex-col items-center text-center opacity-40 mt-4">
           <span className="material-symbols-outlined text-4xl mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Powered by FinVault Intelligence</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface">Powered by FRIDAY Intelligence</p>
         </div>
 
         {/* Chat List Container */}

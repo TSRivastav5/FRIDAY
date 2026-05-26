@@ -14,10 +14,10 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((reg) => {
-        console.log('FinVault Service Worker registered successfully:', reg.scope);
+        console.log('FRIDAY Service Worker registered successfully:', reg.scope);
       })
       .catch((err) => {
-        console.error('FinVault Service Worker registration failed:', err);
+        console.error('FRIDAY Service Worker registration failed:', err);
       });
   });
 }

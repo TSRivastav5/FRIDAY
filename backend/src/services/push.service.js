@@ -3,7 +3,7 @@ import User from "../models/User.js";
 
 // Initialize VAPID credentials once on import
 // Auto-prepend mailto: if the env var was set as a bare email address
-const rawEmail = process.env.VAPID_EMAIL || "admin@finvault.app";
+const rawEmail = process.env.VAPID_EMAIL || "admin@friday.ai";
 const vapidSubject = rawEmail.startsWith("mailto:") || rawEmail.startsWith("https://")
   ? rawEmail
   : `mailto:${rawEmail}`;
@@ -27,8 +27,8 @@ export async function sendPushToUser(userId, { title, body, icon, tag, url }) {
     const payload = JSON.stringify({
       title,
       body,
-      icon: icon || "/icon-192.png",
-      tag: tag || "finvault",
+      icon: icon || "/logo.svg",
+      tag: tag || "friday",
       url: url || "/",
     });
 

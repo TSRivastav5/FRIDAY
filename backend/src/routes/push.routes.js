@@ -41,10 +41,10 @@ router.post("/subscribe", async (req, res) => {
       await webpush.sendNotification(
         subscription,
         JSON.stringify({
-          title: "🔔 FinVault Alerts Active",
+          title: "🔔 FRIDAY Alerts Active",
           body: "You will now receive real-time salary and expense notifications.",
-          icon: "/icon-192.png",
-          tag: "finvault-welcome",
+          icon: "/logo.svg",
+          tag: "friday-welcome",
           url: "/",
         })
       );

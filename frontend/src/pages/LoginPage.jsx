@@ -128,11 +128,18 @@ export const LoginPage = () => {
         className="w-full max-w-md bg-white border-[0.5px] border-outline-variant/30 rounded-xl p-8 mx-4 shadow-premium relative text-left"
       >
         {/* Brand Header */}
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-black text-primary font-headline tracking-widest uppercase mb-1">
-            FinVault
-          </h2>
-          <p className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold opacity-70">
+        <div className="flex flex-col items-center mb-6 text-center">
+          <div className="flex items-center gap-3 justify-center">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-md">
+              <svg width="24" height="24" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
+                <path d="M38 8 L24 30 H34 L27 46 L46 24 H35 Z" fill="#FFFFFF" fill-rule="evenodd"/>
+              </svg>
+            </div>
+            <h2 className="text-3xl font-black text-on-surface font-headline tracking-[0.2em] uppercase">
+              FRIDAY
+            </h2>
+          </div>
+          <p className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold opacity-70 mt-2">
             {isLogin ? 'Initialize System Access' : 'Register New Protocol'}
           </p>
         </div>
@@ -227,7 +234,7 @@ export const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background"
-                placeholder="rahul.kapoor@finvault.com"
+                placeholder="rahul.kapoor@friday.ai"
                 required
               />
             </div>
@@ -329,13 +336,13 @@ export const LoginPage = () => {
             onClick={handleToggleMode}
             className="text-xs text-primary font-bold tracking-wider uppercase hover:underline"
           >
-            {isLogin ? "New to FinVault? Create account" : "Already registered? Sign in"}
+            {isLogin ? "New to FRIDAY? Create account" : "Already registered? Sign in"}
           </button>
         </div>
 
         {/* App Metadata */}
         <div className="mt-8 text-center text-[10px] font-semibold text-outline uppercase tracking-wider opacity-50">
-          FinVault Premium v4.3.0
+          FRIDAY Premium v4.3.0
         </div>
       </motion.div>
     </div>

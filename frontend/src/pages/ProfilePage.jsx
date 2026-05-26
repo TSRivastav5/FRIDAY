@@ -16,7 +16,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 // ─── Push subscription helpers ───────────────────────────────────────────────
-const PUSH_STORAGE_KEY = 'finvault_push_subscribed';
+const PUSH_STORAGE_KEY = 'friday_push_subscribed';
 
 async function subscribePush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -88,7 +88,7 @@ export const ProfilePage = () => {
   const store = useFinanceStore();
 
   const userName = store.user?.name || 'Rahul Kapoor';
-  const userEmail = store.user?.email || 'rahul.kapoor@finvault.com';
+  const userEmail = store.user?.email || 'rahul.kapoor@friday.ai';
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBtn, setShowInstallBtn] = useState(
@@ -150,7 +150,7 @@ export const ProfilePage = () => {
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       alert(
-        "To install FinVault on your device:\n\n1. Tap the Share button in Safari (iOS) or browser settings menu\n2. Select 'Add to Home Screen'\n3. Open from your home screen for standalone wealth command experience."
+        "To install FRIDAY on your device:\n\n1. Tap the Share button in Safari (iOS) or browser settings menu\n2. Select 'Add to Home Screen'\n3. Open from your home screen for standalone wealth command experience."
       );
       return;
     }
@@ -462,7 +462,7 @@ export const ProfilePage = () => {
                       <span className="material-symbols-outlined">install_mobile</span>
                     </div>
                     <div className="text-left">
-                      <span className="text-sm font-bold block text-primary">Install FinVault App</span>
+                      <span className="text-sm font-bold block text-primary">Install FRIDAY App</span>
                       <span className="text-[10px] text-primary/80 uppercase tracking-wider font-semibold">Enable offline wealth management</span>
                     </div>
                   </div>
@@ -499,7 +499,7 @@ export const ProfilePage = () => {
         </div>
 
         <div className="text-center pt-4 pb-8">
-          <p className="text-[10px] font-semibold text-on-surface-variant opacity-50 uppercase tracking-wider">FinVault Premium v4.3.0</p>
+          <p className="text-[10px] font-semibold text-on-surface-variant opacity-50 uppercase tracking-wider">FRIDAY Premium v4.3.0</p>
         </div>
       </main>
 

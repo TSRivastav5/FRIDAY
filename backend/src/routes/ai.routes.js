@@ -95,8 +95,8 @@ router.post("/salary-credited", async (req, res) => {
     const fmt = (n) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
     await sendPushToUser(req.user.id, {
       title: "💰 Salary Protocol Active",
-      body: `${fmt(amount)} credited. FinVault is auto-allocating your commitments.`,
-      icon: "/icon-192.png",
+      body: `${fmt(amount)} credited. FRIDAY is auto-allocating your commitments.`,
+      icon: "/logo.svg",
       tag: "salary-credited",
       url: "/",
     });

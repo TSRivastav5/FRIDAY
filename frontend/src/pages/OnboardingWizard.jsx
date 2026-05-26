@@ -79,7 +79,7 @@ export const OnboardingWizard = () => {
 
       {/* Top Banner (Logo/Step Indicator) */}
       <div className="flex justify-between items-center z-10 shrink-0">
-        <h1 className="text-sm font-black tracking-widest text-primary font-headline">FINVAULT</h1>
+        <h1 className="text-sm font-black tracking-widest text-primary font-headline">FRIDAY</h1>
         <div className="flex gap-1.5">
           {['pin', 'salary', 'commitments', 'investments', 'summary'].map((s, idx) => {
             const stepsList = ['pin', 'salary', 'commitments', 'investments', 'summary'];
