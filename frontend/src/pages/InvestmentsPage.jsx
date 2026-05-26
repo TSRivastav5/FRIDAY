@@ -18,34 +18,47 @@ export const InvestmentsPage = () => {
   const [marketFeed, setMarketFeed] = useState({
     nifty: null,
     sensex: null,
-    isLoading: false
+    isLoading: false,
+    isStale: false,   // true when showing cached/delayed data
+    error: false,
   });
 
   useEffect(() => {
     // Fetch investments on mount
     store.fetchInvestments?.();
 
-    // Fetch live market feed
+    // Fetch live market feed — fetch each symbol independently so one failure doesn't kill both
     const fetchMarketFeed = async () => {
-      setMarketFeed(prev => ({ ...prev, isLoading: true }));
-      try {
-        const [niftyRes, sensexRes] = await Promise.all([
-          fridayAPI.getMarketQuote('^NSEI'),
-          fridayAPI.getMarketQuote('^BSESN')
-        ]);
-        setMarketFeed({
-          nifty: niftyRes.quote,
-          sensex: sensexRes.quote,
-          isLoading: false
-        });
-      } catch (err) {
-        console.error("Failed to fetch market feed:", err);
-        setMarketFeed(prev => ({ ...prev, isLoading: false }));
-      }
+      setMarketFeed(prev => ({ ...prev, isLoading: true, error: false }));
+
+      const fetchOne = async (symbol) => {
+        try {
+          const res = await fridayAPI.getMarketQuote(symbol);
+          return { data: res.quote, stale: res.stale || false };
+        } catch {
+          return { data: null, stale: false };
+        }
+      };
+
+      const [niftyResult, sensexResult] = await Promise.all([
+        fetchOne('^NSEI'),
+        fetchOne('^BSESN'),
+      ]);
+
+      const anyStale = niftyResult.stale || sensexResult.stale;
+
+      setMarketFeed({
+        nifty: niftyResult.data,
+        sensex: sensexResult.data,
+        isLoading: false,
+        isStale: anyStale,
+        error: !niftyResult.data && !sensexResult.data,
+      });
     };
 
     fetchMarketFeed();
   }, []);
+
 
   const stats = store.portfolioStats || { totalInvested: 0, currentValue: 0, totalGain: 0, gainPercent: 0 };
   const databaseInvestments = store.investments || [];
@@ -174,11 +187,22 @@ export const InvestmentsPage = () => {
                     </span>
                   </div>
                 )}
+                {/* Stale indicator — shown when backend returned cached data due to rate limit */}
+                {marketFeed.isStale && (
+                  <div className="flex items-center gap-1 shrink-0 border-l border-white/10 pl-4 opacity-50">
+                    <span className="material-symbols-outlined text-[12px] text-on-primary/40">schedule</span>
+                    <span className="text-[9px] text-on-primary/40 uppercase font-bold tracking-wider">Delayed</span>
+                  </div>
+                )}
               </>
             ) : (
-              <div className="text-[10px] text-on-primary/30 uppercase font-semibold">Feed temporarily offline</div>
+              <div className="flex items-center gap-1.5 text-[10px] text-on-primary/30 uppercase font-semibold">
+                <span className="material-symbols-outlined text-[14px]">do_not_disturb_on</span>
+                Market closed · data unavailable
+              </div>
             )}
           </div>
+
 
           <div className="flex flex-col gap-1">
             <p className="text-[11px] font-semibold tracking-wider text-on-primary-fixed opacity-60">PORTFOLIO TOTAL</p>
