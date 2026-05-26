@@ -25,9 +25,16 @@ export const useFinanceStore = create(
       // Only lock if user is logged in AND has set a PIN
       isLocked: fridayAPI.isLoggedIn() && !!localStorage.getItem("friday_pin"),
       pin: localStorage.getItem("friday_pin") || null,
-      setPin: (newPin) => {
+      setPin: async (newPin) => {
         localStorage.setItem("friday_pin", newPin);
         set({ pin: newPin });
+        if (fridayAPI.isLoggedIn()) {
+          try {
+            await fridayAPI.updatePin(newPin);
+          } catch (error) {
+            console.error("Failed to sync PIN to backend:", error);
+          }
+        }
       },
       setLocked: (locked) => set({ isLocked: locked }),
 
@@ -66,6 +73,34 @@ export const useFinanceStore = create(
             currentAllocation: null,
             chatMessages: [],
           });
+          return data;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      loginPin: async (email, pin) => {
+        set({ isLoading: true, error: null });
+        try {
+          const data = await fridayAPI.loginPin(email, pin);
+          // Wipe any stale financial data from a previous session before loading new user
+          set({
+            user: data.user,
+            isAuthenticated: true,
+            isLocked: false,
+            isLoading: false,
+            salary: null,
+            salaryHistory: [],
+            expenses: [],
+            investments: [],
+            portfolioStats: null,
+            currentAllocation: null,
+            chatMessages: [],
+            pin: pin, // Set pin state on success
+          });
+          // Also set it in localStorage so returning users don't have to enter it again for the lockscreen
+          localStorage.setItem("friday_pin", pin);
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });

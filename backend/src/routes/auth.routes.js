@@ -98,6 +98,68 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Set/Update Security PIN (PocketPin)
+router.put("/pin", auth, async (req, res) => {
+  try {
+    const { pin } = req.body;
+    if (!pin || pin.length !== 4 || !/^\d+$/.test(pin)) {
+      return res.status(400).json({ error: "PIN must be a 4-digit number" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.pin = pin;
+    await user.save();
+
+    res.json({ success: true, message: "Security PIN updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Login via Security PIN (PocketPin)
+router.post("/login-pin", async (req, res) => {
+  try {
+    const { email, pin } = req.body;
+
+    if (!email || !pin) {
+      return res.status(400).json({ error: "Email and PIN are required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!user.pin) {
+      return res.status(400).json({ error: "No security PIN set for this account. Please login with password first." });
+    }
+
+    const isMatch = await user.comparePin(pin);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Incorrect Security PIN" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "default_super_secret_friday_key",
+      { expiresIn: "90d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: user.toJSON(),
+      greeting: `Welcome back, Boss! 🤖 Logged in securely via PocketPin.`,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get profile
 router.get("/me", auth, async (req, res) => {
   try {

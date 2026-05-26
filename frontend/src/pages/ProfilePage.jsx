@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import api from '../services/api';
 
@@ -104,6 +105,11 @@ export const ProfilePage = () => {
   const [pushStatus, setPushStatus] = useState(''); // 'success' | 'error' | 'blocked' | ''
   const [pushMessage, setPushMessage] = useState('');
   const [showUnblockTip, setShowUnblockTip] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [isUpdatingPin, setIsUpdatingPin] = useState(false);
 
   // Read real browser permission on mount and keep in sync
   useEffect(() => {
@@ -339,6 +345,23 @@ export const ProfilePage = () => {
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
+              {/* PocketPin Management Row */}
+              <button
+                onClick={() => setShowPinModal(true)}
+                className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined">key</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-semibold block text-on-surface">PocketPin Security</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Change your 4-digit security PIN</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-outline">chevron_right</span>
+              </button>
+
               {/* ─── Smart Alerts Row ──────────────────────────────────── */}
               <div
                 id="smart-alerts-toggle"
@@ -479,6 +502,109 @@ export const ProfilePage = () => {
           <p className="text-[10px] font-semibold text-on-surface-variant opacity-50 uppercase tracking-wider">FinVault Premium v4.3.0</p>
         </div>
       </main>
+
+      {/* PocketPin Update Modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white border border-outline-variant/30 rounded-2xl p-6 shadow-premium relative text-left"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-base font-bold text-on-surface font-headline">Update Security PIN</h3>
+                <button
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setNewPin('');
+                    setConfirmPin('');
+                    setPinError('');
+                  }}
+                  className="text-outline hover:text-on-surface p-1 rounded-lg"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+
+              {pinError && (
+                <div className="p-2.5 mb-4 bg-error-container text-error rounded-xl text-xs font-semibold border border-error/20 text-center">
+                  ⚠️ {pinError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">New 4-Digit PIN</label>
+                  <input
+                    type="password"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={newPin}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setNewPin(val);
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-mono text-center tracking-widest text-lg"
+                    placeholder="••••"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">Confirm New PIN</label>
+                  <input
+                    type="password"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={confirmPin}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setConfirmPin(val);
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-mono text-center tracking-widest text-lg"
+                    placeholder="••••"
+                    required
+                  />
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (newPin.length !== 4 || confirmPin.length !== 4) {
+                      setPinError("PIN must be exactly 4 digits");
+                      return;
+                    }
+                    if (newPin !== confirmPin) {
+                      setPinError("PINs do not match");
+                      return;
+                    }
+                    setIsUpdatingPin(true);
+                    setPinError('');
+                    try {
+                      await store.setPin(newPin);
+                      alert("Security PIN updated successfully!");
+                      setShowPinModal(false);
+                      setNewPin('');
+                      setConfirmPin('');
+                    } catch (err) {
+                      setPinError(err.message || "Failed to update PIN");
+                    } finally {
+                      setIsUpdatingPin(false);
+                    }
+                  }}
+                  disabled={isUpdatingPin}
+                  className="w-full py-3 mt-2 bg-primary hover:bg-primary-hover text-white font-bold tracking-widest uppercase text-xs rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center"
+                >
+                  {isUpdatingPin ? "Updating..." : "Confirm PIN Update"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

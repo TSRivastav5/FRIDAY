@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
+    pin: { type: String }, // Hashed 4-digit security PIN
 
     // Family member? (for multi-user family support)
     familyRole: {
@@ -88,10 +89,14 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving
+// Hash password and pin before saving
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  this.password = await bcrypt.hash(this.password, 12);
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 12);
+  }
+  if (this.isModified("pin") && this.pin) {
+    this.pin = await bcrypt.hash(this.pin, 12);
+  }
   next();
 });
 
@@ -100,10 +105,17 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Never return password in JSON
+// Compare security PIN
+userSchema.methods.comparePin = async function (candidatePin) {
+  if (!this.pin) return false;
+  return bcrypt.compare(candidatePin, this.pin);
+};
+
+// Never return password or pin in JSON
 userSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.pin;
   return obj;
 };
 

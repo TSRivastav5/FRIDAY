@@ -61,6 +61,18 @@ class FridayAPI {
     return data;
   }
 
+  async loginPin(email, pin) {
+    const data = await this.post("/auth/login-pin", { email, pin });
+    this.token = data.token;
+    localStorage.setItem("friday_token", data.token);
+    localStorage.setItem("friday_user", JSON.stringify(data.user));
+    return data;
+  }
+
+  async updatePin(pin) {
+    return this.put("/auth/pin", { pin });
+  }
+
   async register(name, email, password) {
     const data = await this.post("/auth/register", {
       name,
