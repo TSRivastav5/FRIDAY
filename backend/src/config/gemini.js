@@ -8,13 +8,17 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// CRITICAL: Force v1 API — Google moved gemini-1.5-flash OUT of v1beta.
+// Without this, the SDK defaults to v1beta and gets a 404.
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, {
+  apiVersion: "v1",
+});
 
 // Using Gemini 1.5 Flash — fastest free model (15 RPM free tier)
 export const geminiModel = genAI.getGenerativeModel({
   model: "gemini-1.5-flash",
   generationConfig: {
-    temperature: 0.3,
+    temperature: 0.3,       // Low for financial accuracy
     topP: 0.8,
     maxOutputTokens: 2048,
   },
