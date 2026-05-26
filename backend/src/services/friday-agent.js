@@ -132,7 +132,7 @@ export class FridayAgent {
     
     // Custom model instance for chat with market quote tools enabled
     this.chatModel = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       generationConfig: {
         temperature: 0.3,
         topP: 0.8,
