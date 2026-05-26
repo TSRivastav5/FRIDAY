@@ -23,13 +23,24 @@ function App() {
     }
   }, []);
 
+  // Always fetch user's data on mount if a valid token is present
   useEffect(() => {
-    if (store.isAuthenticated) {
+    if (store.isAuthenticated && !store.isLocked) {
       store.fetchCurrentSalary?.();
       store.fetchInvestments?.();
       store.fetchExpenses?.();
     }
-  }, [store.isAuthenticated]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Also re-fetch immediately after lock screen unlocks
+  useEffect(() => {
+    if (store.isAuthenticated && !store.isLocked) {
+      store.fetchCurrentSalary?.();
+      store.fetchInvestments?.();
+      store.fetchExpenses?.();
+    }
+  }, [store.isLocked]);
 
   const renderPage = () => {
     switch (store.activeTab) {

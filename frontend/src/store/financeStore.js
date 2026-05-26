@@ -22,7 +22,8 @@ export const useFinanceStore = create(
       setSalaryModal: (isOpen) => set({ showSalaryModal: isOpen }),
       
       // ──────── Security State ────────
-      isLocked: fridayAPI.isLoggedIn(),
+      // Only lock if user is logged in AND has set a PIN
+      isLocked: fridayAPI.isLoggedIn() && !!localStorage.getItem("friday_pin"),
       pin: localStorage.getItem("friday_pin") || null,
       setPin: (newPin) => {
         localStorage.setItem("friday_pin", newPin);
@@ -51,7 +52,20 @@ export const useFinanceStore = create(
         set({ isLoading: true, error: null });
         try {
           const data = await fridayAPI.login(email, password);
-          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          // Wipe any stale financial data from a previous session before loading new user
+          set({
+            user: data.user,
+            isAuthenticated: true,
+            isLocked: false,
+            isLoading: false,
+            salary: null,
+            salaryHistory: [],
+            expenses: [],
+            investments: [],
+            portfolioStats: null,
+            currentAllocation: null,
+            chatMessages: [],
+          });
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });
@@ -63,7 +77,20 @@ export const useFinanceStore = create(
         set({ isLoading: true, error: null });
         try {
           const data = await fridayAPI.register(name, email, password);
-          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          // Fresh slate for a new user
+          set({
+            user: data.user,
+            isAuthenticated: true,
+            isLocked: false,
+            isLoading: false,
+            salary: null,
+            salaryHistory: [],
+            expenses: [],
+            investments: [],
+            portfolioStats: null,
+            currentAllocation: null,
+            chatMessages: [],
+          });
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });
@@ -114,7 +141,21 @@ export const useFinanceStore = create(
 
       logout: () => {
         fridayAPI.logout();
-        set({ user: null, isAuthenticated: false });
+        // Full state wipe — no data should survive across user sessions
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLocked: false,
+          salary: null,
+          salaryHistory: [],
+          expenses: [],
+          investments: [],
+          portfolioStats: null,
+          currentAllocation: null,
+          chatMessages: [],
+          error: null,
+          isLoading: false,
+        });
       },
 
       // Salary
@@ -162,7 +203,8 @@ export const useFinanceStore = create(
       fetchSalaryHistory: async () => {
         try {
           const data = await fridayAPI.getSalaryHistory();
-          set({ salaryHistory: data.history });
+          // API returns { salaries: [...] }
+          set({ salaryHistory: data.salaries || [] });
         } catch (error) {
           console.error("Failed to fetch salary history:", error);
         }
