@@ -41,6 +41,8 @@ const userSchema = new mongoose.Schema(
             name: String,
             amount: Number,
             endDate: Date,
+            dueDate: Number,
+            lender: String,
             type: {
               type: String,
               enum: ["home", "car", "personal", "education"],

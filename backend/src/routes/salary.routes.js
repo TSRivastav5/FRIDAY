@@ -52,4 +52,17 @@ router.put("/:id/allocation", async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    const salary = await Salary.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id,
+    });
+    if (!salary) return res.status(404).json({ error: "Not found" });
+    res.json({ success: true, message: "Salary deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

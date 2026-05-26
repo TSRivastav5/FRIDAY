@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import api from '../services/api';
+import { formatCurrency } from '../utils/helpers';
 
 // ─── Utility: base64 URL decode for VAPID key ────────────────────────────────
 function urlBase64ToUint8Array(base64String) {
@@ -83,7 +84,22 @@ function getUnblockInstructions() {
   return `${base} Open your browser's site settings and allow notifications for this site.`;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Sub-Screen Header Component ─────────────────────────────────────────────
+const SubScreenHeader = ({ title, onBack }) => (
+  <header className="bg-inverse-surface w-full pt-12 pb-4 px-5 sticky top-0 z-50 text-on-primary">
+    <div className="max-w-xl mx-auto flex items-center gap-4">
+      <button 
+        onClick={onBack}
+        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+      >
+        <span className="material-symbols-outlined text-on-primary">arrow_back</span>
+      </button>
+      <h2 className="text-lg font-bold text-on-primary">{title}</h2>
+    </div>
+  </header>
+);
+
+// ─── Main Component ──────────────────────────────────────────────────────────
 export const ProfilePage = () => {
   const store = useFinanceStore();
 
@@ -95,8 +111,10 @@ export const ProfilePage = () => {
     !(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)
   );
 
+  // ── Sub-screens state ──────────────────────────────────────────────────────
+  const [activeSubScreen, setActiveSubScreen] = useState(null); // 'salary' | 'emi' | 'sip' | 'budget' | null
+
   // ── Push state ─────────────────────────────────────────────────────────────
-  // permissionState: 'default' | 'granted' | 'denied' | 'not_supported'
   const [permissionState, setPermissionState] = useState('default');
   const [pushEnabled, setPushEnabled] = useState(
     localStorage.getItem(PUSH_STORAGE_KEY) === 'true'
@@ -105,6 +123,9 @@ export const ProfilePage = () => {
   const [pushStatus, setPushStatus] = useState(''); // 'success' | 'error' | 'blocked' | ''
   const [pushMessage, setPushMessage] = useState('');
   const [showUnblockTip, setShowUnblockTip] = useState(false);
+  const [showUnblockModal, setShowUnblockModal] = useState(false);
+  const [unblockTab, setUnblockTab] = useState('Chrome');
+
   const [showPinModal, setShowPinModal] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -113,7 +134,53 @@ export const ProfilePage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
-  // Read real browser permission on mount and keep in sync
+  // ── Financial Profile Form States ──────────────────────────────────────────
+  const profile = store.user?.financialProfile || {};
+
+  // Salary rules sub-screen fields
+  const [salSalary, setSalSalary] = useState('');
+  const [salDay, setSalDay] = useState(1);
+  const [salBank, setSalBank] = useState('');
+  const [salAutoSplit, setSalAutoSplit] = useState(true);
+
+  // EMI setup sub-screen fields
+  const [emiLabel, setEmiLabel] = useState('');
+  const [emiLender, setEmiLender] = useState('');
+  const [emiAmount, setEmiAmount] = useState('');
+  const [emiDueDate, setEmiDueDate] = useState(5);
+  const [emiEndMonth, setEmiEndMonth] = useState('');
+  const [emiType, setEmiType] = useState('home');
+  const [editingEmiId, setEditingEmiId] = useState(null);
+
+  // SIP setup sub-screen fields
+  const [sipFundName, setSipFundName] = useState('');
+  const [sipAmount, setSipAmount] = useState('');
+  const [sipDate, setSipDate] = useState(10);
+  const [sipLinked, setSipLinked] = useState(true);
+
+  // Travel & Bills Budget limits fields
+  const [budTravel, setBudTravel] = useState('');
+  const [budBills, setBudBills] = useState('');
+
+  // Sync profile values to local states
+  useEffect(() => {
+    if (store.user?.financialProfile) {
+      const prof = store.user.financialProfile;
+      setSalSalary(prof.monthlySalary || '');
+      setSalDay(prof.salaryDay || 1);
+      setSalBank(prof.bankAccount || 'HDFC Bank');
+      setSalAutoSplit(prof.autoSplit !== false);
+      setBudTravel(prof.travelDefault || '');
+      setBudBills(prof.billsDefault || '');
+    }
+  }, [store.user?.financialProfile]);
+
+  // Load investments on mount (specifically SIPs)
+  useEffect(() => {
+    store.fetchInvestments?.();
+  }, []);
+
+  // Sync permissions on mount
   useEffect(() => {
     if (!('Notification' in window)) {
       setPermissionState('not_supported');
@@ -121,13 +188,11 @@ export const ProfilePage = () => {
     }
     setPermissionState(Notification.permission);
 
-    // If previously stored as enabled but permission is now denied, clean up
     if (Notification.permission === 'denied') {
       localStorage.removeItem(PUSH_STORAGE_KEY);
       setPushEnabled(false);
     }
 
-    // Also verify actual SW subscription matches
     if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.ready.then(async (reg) => {
         const sub = await reg.pushManager.getSubscription();
@@ -149,6 +214,33 @@ export const ProfilePage = () => {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // ── Helper functions for dates ─────────────────────────────────────────────
+  const getNextDate = (day) => {
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+    if (today.getDate() > day) {
+      month += 1;
+      if (month > 11) {
+        month = 0;
+        year += 1;
+      }
+    }
+    return new Date(year, month, day);
+  };
+
+  const toMonthInputValue = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const getMonthYearLabel = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+  };
+
   const handleInstallClick = async () => {
     if (!deferredPrompt) {
       alert(
@@ -163,7 +255,6 @@ export const ProfilePage = () => {
   };
 
   const handleLogout = () => store.logout();
-  const handleOpenSalaryRules = () => store.setSalaryModal(true);
 
   const clearStatus = () => {
     setTimeout(() => {
@@ -174,12 +265,8 @@ export const ProfilePage = () => {
   };
 
   const handlePushToggle = useCallback(async () => {
-    // If browser has permanently blocked, show unblock instructions
     if (permissionState === 'denied') {
-      setShowUnblockTip(true);
-      setPushStatus('blocked');
-      setPushMessage(getUnblockInstructions());
-      clearStatus();
+      setShowUnblockModal(true);
       return;
     }
 
@@ -208,8 +295,7 @@ export const ProfilePage = () => {
         setPushEnabled(false);
         localStorage.removeItem(PUSH_STORAGE_KEY);
         setPushStatus('blocked');
-        setShowUnblockTip(true);
-        setPushMessage(getUnblockInstructions());
+        setShowUnblockModal(true);
       } else if (err.message === 'not_supported') {
         setPushStatus('error');
         setPushMessage('Push notifications are not supported in this browser.');
@@ -231,17 +317,205 @@ export const ProfilePage = () => {
     'PushManager' in window &&
     'Notification' in window;
 
-  // Derive display state
   const isBlocked = permissionState === 'denied';
   const toggleDisabled = !notifSupported || pushLoading;
 
-  // Sub-label under Smart Alerts
   const getSubLabel = () => {
     if (!notifSupported) return 'Not supported in this browser';
     if (isBlocked) return 'Blocked — tap for instructions to unblock';
     if (pushEnabled) return 'Real-time push — salary & spend alerts active';
     return 'Tap to enable background notifications';
   };
+
+  // ── Financial Profile Save Handlers ────────────────────────────────────────
+  const handleSaveSalaryRules = async (e) => {
+    e.preventDefault();
+    try {
+      const updatedProfile = {
+        ...profile,
+        monthlySalary: parseFloat(salSalary) || 0,
+        salaryDay: parseInt(salDay, 10),
+        bankAccount: salBank || 'HDFC Bank',
+        autoSplit: salAutoSplit,
+      };
+      await store.updateProfile(updatedProfile);
+      alert("Salary rules saved successfully!");
+      setActiveSubScreen(null);
+    } catch (err) {
+      alert("Failed to update salary rules: " + err.message);
+    }
+  };
+
+  const handleSaveEmi = async (e) => {
+    e.preventDefault();
+    if (!emiLabel || !emiAmount || !emiEndMonth) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const newEmi = {
+      name: emiLabel,
+      lender: emiLender || "Generic Lender",
+      amount: parseFloat(emiAmount) || 0,
+      dueDate: parseInt(emiDueDate, 10),
+      endDate: new Date(emiEndMonth + "-02"), // Offsetting date to prevent tz drop
+      type: emiType,
+    };
+
+    let updatedEmis = [...(profile.fixedExpenses?.emis || [])];
+    if (editingEmiId !== null) {
+      updatedEmis = updatedEmis.map((item, idx) => 
+        (item._id === editingEmiId || idx === editingEmiId) ? { ...item, ...newEmi } : item
+      );
+    } else {
+      updatedEmis.push(newEmi);
+    }
+
+    const totalEmiDefault = updatedEmis.reduce((sum, item) => sum + item.amount, 0);
+
+    const updatedProfile = {
+      ...profile,
+      fixedExpenses: {
+        ...profile.fixedExpenses,
+        emis: updatedEmis,
+        emiDefault: totalEmiDefault,
+      }
+    };
+
+    try {
+      await store.updateProfile(updatedProfile);
+      alert(editingEmiId !== null ? "EMI commitment updated!" : "EMI commitment added!");
+      setEmiLabel('');
+      setEmiLender('');
+      setEmiAmount('');
+      setEmiDueDate(5);
+      setEmiEndMonth('');
+      setEmiType('home');
+      setEditingEmiId(null);
+    } catch (err) {
+      alert("Failed to save EMI: " + err.message);
+    }
+  };
+
+  const handleStartEditEmi = (emiItem, idx) => {
+    setEditingEmiId(emiItem._id || idx);
+    setEmiLabel(emiItem.name);
+    setEmiLender(emiItem.lender || '');
+    setEmiAmount(emiItem.amount);
+    setEmiDueDate(emiItem.dueDate || 5);
+    setEmiEndMonth(toMonthInputValue(emiItem.endDate));
+    setEmiType(emiItem.type || 'home');
+  };
+
+  const handleDeleteEmi = async (emiItem, idx) => {
+    if (!window.confirm("Are you sure you want to remove this EMI commitment?")) return;
+
+    const updatedEmis = (profile.fixedExpenses?.emis || []).filter(
+      (item, i) => item._id !== emiItem._id && i !== idx
+    );
+    const totalEmiDefault = updatedEmis.reduce((sum, item) => sum + item.amount, 0);
+
+    const updatedProfile = {
+      ...profile,
+      fixedExpenses: {
+        ...profile.fixedExpenses,
+        emis: updatedEmis,
+        emiDefault: totalEmiDefault,
+      }
+    };
+
+    try {
+      await store.updateProfile(updatedProfile);
+    } catch (err) {
+      alert("Failed to delete EMI: " + err.message);
+    }
+  };
+
+  const handleAddSip = async (e) => {
+    e.preventDefault();
+    if (!sipFundName || !sipAmount) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    const deductionDay = parseInt(sipDate, 10);
+    const nextDate = getNextDate(deductionDay);
+
+    const sipData = {
+      name: sipFundName,
+      type: "sip",
+      investedAmount: parseFloat(sipAmount) || 0,
+      currentValue: parseFloat(sipAmount) || 0,
+      tags: sipLinked ? ["linked_to_salary"] : [],
+      sipDetails: {
+        monthlyAmount: parseFloat(sipAmount) || 0,
+        startDate: new Date(),
+        nextDate: nextDate,
+      }
+    };
+
+    try {
+      await store.addInvestment(sipData);
+      alert("SIP configuration added successfully!");
+      
+      // Update profile sipDefault sum
+      setTimeout(async () => {
+        const activeSips = (store.investments || []).filter(inv => inv.type === 'sip' && inv.isActive !== false);
+        const newTotalSip = activeSips.reduce((sum, s) => sum + s.investedAmount, 0) + sipData.investedAmount;
+        await store.updateProfile({
+          ...profile,
+          sipDefault: newTotalSip
+        });
+      }, 150);
+
+      setSipFundName('');
+      setSipAmount('');
+      setSipDate(10);
+      setSipLinked(true);
+    } catch (err) {
+      alert("Failed to save SIP: " + err.message);
+    }
+  };
+
+  const handleDeleteSip = async (id) => {
+    if (!window.confirm("Are you sure you want to remove this SIP?")) return;
+
+    try {
+      await store.deleteInvestment(id);
+      
+      // Recalculate sipDefault sum
+      setTimeout(async () => {
+        const activeSips = (store.investments || []).filter(inv => inv.type === 'sip' && inv.isActive !== false && inv._id !== id);
+        const newTotalSip = activeSips.reduce((sum, s) => sum + s.investedAmount, 0);
+        await store.updateProfile({
+          ...profile,
+          sipDefault: newTotalSip
+        });
+      }, 150);
+    } catch (err) {
+      alert("Failed to delete SIP: " + err.message);
+    }
+  };
+
+  const handleSaveBudget = async (e) => {
+    e.preventDefault();
+    try {
+      const updatedProfile = {
+        ...profile,
+        travelDefault: parseFloat(budTravel) || 0,
+        billsDefault: parseFloat(budBills) || 0,
+      };
+      await store.updateProfile(updatedProfile);
+      alert("Budgets updated successfully!");
+      setActiveSubScreen(null);
+    } catch (err) {
+      alert("Failed to save budgets: " + err.message);
+    }
+  };
+
+  const activeSipsList = (store.investments || []).filter(
+    (inv) => inv.type === 'sip' && inv.isActive !== false
+  );
 
   return (
     <div className="bg-surface text-on-surface min-h-screen pb-32">
@@ -287,7 +561,7 @@ export const ProfilePage = () => {
             <h3 className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-widest pl-1 text-left">Financial Rules</h3>
             <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant/30 rounded-xl overflow-hidden shadow-sm">
               <button
-                onClick={handleOpenSalaryRules}
+                onClick={() => setActiveSubScreen('salary')}
                 className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
               >
                 <div className="flex items-center gap-4">
@@ -296,33 +570,63 @@ export const ProfilePage = () => {
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-semibold block text-on-surface">Salary rules</span>
-                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Automate savings on credit</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                      Monthly Salary: {formatCurrency(profile.monthlySalary || 0)}
+                    </span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
-              <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200">
+              <button
+                onClick={() => setActiveSubScreen('emi')}
+                className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error">
                     <span className="material-symbols-outlined">credit_score</span>
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-semibold block text-on-surface">EMI setup</span>
-                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">3 active commitments</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                      {(profile.fixedExpenses?.emis || []).length} active commitments
+                    </span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
-              <button className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200">
+              <button
+                onClick={() => setActiveSubScreen('sip')}
+                className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-tertiary/10 flex items-center justify-center text-tertiary">
                     <span className="material-symbols-outlined">energy_savings_leaf</span>
                   </div>
                   <div className="text-left">
                     <span className="text-sm font-semibold block text-on-surface">SIP configuration</span>
-                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Optimizing for 14.2% YTD</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                      {activeSipsList.length} active SIPs
+                    </span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-outline">chevron_right</span>
+              </button>
+
+              <button
+                onClick={() => setActiveSubScreen('budget')}
+                className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors active:scale-[0.99] duration-200"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined">payments</span>
+                  </div>
+                  <div className="text-left">
+                    <span className="text-sm font-semibold block text-on-surface">Travel &amp; Bills budget</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">
+                      Limit: {formatCurrency((profile.travelDefault || 0) + (profile.billsDefault || 0))} / month
+                    </span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
@@ -690,6 +994,591 @@ export const ProfilePage = () => {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── Push Alerts: Interactive Unblock Modal ───────────────────────── */}
+      <AnimatePresence>
+        {showUnblockModal && (
+          <div className="fixed inset-0 z-[300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white border border-outline-variant/30 rounded-2xl p-6 shadow-2xl relative text-left"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2 text-error">
+                  <span className="material-symbols-outlined">notifications_off</span>
+                  <h3 className="text-base font-bold font-headline">Enable Notifications</h3>
+                </div>
+                <button
+                  onClick={() => setShowUnblockModal(false)}
+                  className="text-outline hover:text-on-surface p-1 rounded-lg"
+                >
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Notifications are blocked for this site. To receive real-time credit updates and spending advice, follow the step-by-step instructions for your browser below:
+                </p>
+
+                {/* Tab selector */}
+                <div className="flex border-b border-outline-variant/20 gap-1 overflow-x-auto pb-1">
+                  {['Chrome', 'Safari', 'Firefox', 'Edge', 'iOS / PWA'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setUnblockTab(tab)}
+                      className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap ${
+                        unblockTab === tab
+                          ? 'bg-primary text-white'
+                          : 'text-on-surface-variant hover:bg-surface-container'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content */}
+                <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/15 text-xs text-on-surface leading-relaxed min-h-[120px]">
+                  {unblockTab === 'Chrome' && (
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Click the **🔒 lock icon** on the left of the address bar.</li>
+                      <li>Find **Notifications** in the dropdown.</li>
+                      <li>Toggle the switch to **Allow**.</li>
+                      <li>Refresh the page to apply changes.</li>
+                    </ol>
+                  )}
+                  {unblockTab === 'Safari' && (
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Go to **Safari** in top menu → **Settings** (or Preferences).</li>
+                      <li>Click the **Websites** tab, then select **Notifications**.</li>
+                      <li>Locate **FRIDAY** in the website list.</li>
+                      <li>Change the option from Deny to **Allow**.</li>
+                    </ol>
+                  )}
+                  {unblockTab === 'Firefox' && (
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Click the **permissions/shield icon** to the left of the URL.</li>
+                      <li>Click the **X** next to *Allowed/Blocked* status for Notifications.</li>
+                      <li>Refresh the page.</li>
+                      <li>Click **Allow** when the notification prompt pops up.</li>
+                    </ol>
+                  )}
+                  {unblockTab === 'Edge' && (
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>Click the **🔒 lock icon** in the address bar.</li>
+                      <li>Select **Permissions for this site**.</li>
+                      <li>Locate **Notifications** and set to **Allow**.</li>
+                      <li>Reload the page to confirm.</li>
+                    </ol>
+                  )}
+                  {unblockTab === 'iOS / PWA' && (
+                    <ol className="list-decimal list-inside space-y-2">
+                      <li>First, ensure you have **Installed** FRIDAY to your home screen (tap the Share icon → Add to Home Screen).</li>
+                      <li>Launch **FRIDAY** from your home screen.</li>
+                      <li>Go to iOS **Settings** → **Notifications** → **FRIDAY**.</li>
+                      <li>Ensure **Allow Notifications** is enabled.</li>
+                      <li>Return to the app and click the Smart Alerts toggle.</li>
+                    </ol>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowUnblockModal(false)}
+                    className="flex-1 py-2.5 border border-outline-variant/40 hover:bg-background text-on-surface font-semibold text-xs rounded-xl transition-all text-center"
+                  >
+                    Close Guide
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setShowUnblockModal(false);
+                      try {
+                        const perm = await Notification.requestPermission();
+                        setPermissionState(perm);
+                        if (perm === 'granted') {
+                          await subscribePush();
+                          setPushEnabled(true);
+                          alert("Notifications configured successfully!");
+                        } else {
+                          alert("Permission still blocked. Please follow the instructions to allow notifications.");
+                        }
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-md transition-all text-center"
+                  >
+                    Try Trigger Prompt
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── SLIDE-OVER SUB-SCREENS ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {/* 1. Salary Rules Sub-screen */}
+        {activeSubScreen === 'salary' && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 z-[150] bg-surface overflow-y-auto pb-12 flex flex-col"
+          >
+            <SubScreenHeader title="Salary Rules" onBack={() => setActiveSubScreen(null)} />
+            
+            <main className="max-w-xl mx-auto w-full px-5 pt-6 text-left space-y-6">
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Configure your base monthly income and credit date. FRIDAY uses this to automate your expense allocations and compute savings potential when a credit is detected.
+              </p>
+
+              <form onSubmit={handleSaveSalaryRules} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Salary (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={salSalary}
+                      onChange={(e) => setSalSalary(e.target.value)}
+                      placeholder="e.g. 75000"
+                      className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Salary Credit Day</label>
+                  <select
+                    value={salDay}
+                    onChange={(e) => setSalDay(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
+                  >
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                        {day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of the month
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Bank Account</label>
+                  <input
+                    type="text"
+                    value={salBank}
+                    onChange={(e) => setSalBank(e.target.value)}
+                    placeholder="e.g. HDFC Bank"
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
+                    required
+                  />
+                </div>
+
+                {/* Auto-split toggle */}
+                <div className="flex items-center justify-between py-2 border-t border-outline-variant/10">
+                  <div className="text-left pr-4">
+                    <span className="text-sm font-semibold block text-on-surface">Auto-split allocations</span>
+                    <span className="text-[10px] text-on-surface-variant font-medium">Split budget immediately upon salary credit detection</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSalAutoSplit(!salAutoSplit)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                      salAutoSplit ? 'bg-primary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        salAutoSplit ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold tracking-widest uppercase text-xs rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center"
+                >
+                  Save Salary Rules
+                </button>
+              </form>
+            </main>
+          </motion.div>
+        )}
+
+        {/* 2. EMI Setup Sub-screen */}
+        {activeSubScreen === 'emi' && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 z-[150] bg-surface overflow-y-auto pb-12 flex flex-col"
+          >
+            <SubScreenHeader title="EMI Setup" onBack={() => setActiveSubScreen(null)} />
+
+            <main className="max-w-xl mx-auto w-full px-5 pt-6 text-left space-y-6">
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Add your active monthly debt obligations. These fixed charges are prioritised during salary credit allocation.
+              </p>
+
+              {/* Form to Add/Edit EMI */}
+              <form onSubmit={handleSaveEmi} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
+                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">
+                  {editingEmiId !== null ? 'Edit EMI Commitment' : 'Add New EMI commitment'}
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">EMI Label</label>
+                    <input
+                      type="text"
+                      value={emiLabel}
+                      onChange={(e) => setEmiLabel(e.target.value)}
+                      placeholder="e.g. Home loan, Car loan"
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Bank / Lender</label>
+                    <input
+                      type="text"
+                      value={emiLender}
+                      onChange={(e) => setEmiLender(e.target.value)}
+                      placeholder="e.g. SBI, HDFC"
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={emiAmount}
+                      onChange={(e) => setEmiAmount(e.target.value)}
+                      placeholder="e.g. 15000"
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-bold text-on-surface"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Due Date</label>
+                    <select
+                      value={emiDueDate}
+                      onChange={(e) => setEmiDueDate(e.target.value)}
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>Day {day} of the month</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">End Month/Year</label>
+                    <input
+                      type="month"
+                      value={emiEndMonth}
+                      onChange={(e) => setEmiEndMonth(e.target.value)}
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Loan Type</label>
+                    <select
+                      value={emiType}
+                      onChange={(e) => setEmiType(e.target.value)}
+                      className="w-full px-4 py-2 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                    >
+                      <option value="home">Home Loan</option>
+                      <option value="car">Car Loan</option>
+                      <option value="personal">Personal Loan</option>
+                      <option value="education">Education Loan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold tracking-wider uppercase text-[10px] rounded-xl shadow-md transition-all active:scale-[0.98]"
+                  >
+                    {editingEmiId !== null ? 'Update Commitment' : 'Add EMI Commitment'}
+                  </button>
+                  {editingEmiId !== null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingEmiId(null);
+                        setEmiLabel('');
+                        setEmiLender('');
+                        setEmiAmount('');
+                        setEmiDueDate(5);
+                        setEmiEndMonth('');
+                        setEmiType('home');
+                      }}
+                      className="px-4 py-2.5 border border-outline-variant/40 hover:bg-background text-on-surface font-semibold text-[10px] tracking-wider uppercase rounded-xl transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {/* List of Active EMIs */}
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider pl-1">Active Commitments List</h3>
+                
+                {!(profile.fixedExpenses?.emis?.length) ? (
+                  <div className="text-center py-8 bg-surface-container-lowest border border-outline-variant/15 rounded-2xl text-on-surface-variant text-xs font-medium uppercase tracking-wider">
+                    No active EMIs configured
+                  </div>
+                ) : (
+                  (profile.fixedExpenses?.emis || []).map((emiItem, idx) => (
+                    <div key={emiItem._id || idx} className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex items-center justify-between hover:border-primary transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-on-surface">{emiItem.name}</span>
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-outline-variant/30 text-on-surface-variant">
+                            {emiItem.type}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant mt-1 uppercase font-semibold tracking-wider">
+                          Lender: {emiItem.lender || 'Generic'} · Due: {emiItem.dueDate || 5}th · Ends: {getMonthYearLabel(emiItem.endDate)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm font-bold text-error">-{formatCurrency(emiItem.amount)}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleStartEditEmi(emiItem, idx)}
+                            className="p-1 rounded text-outline hover:text-primary hover:bg-primary/5"
+                            title="Edit EMI"
+                          >
+                            <span className="material-symbols-outlined text-sm">edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEmi(emiItem, idx)}
+                            className="p-1 rounded text-outline hover:text-error hover:bg-error/5"
+                            title="Delete EMI"
+                          >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* 3. SIP Configuration Sub-screen */}
+        {activeSubScreen === 'sip' && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 z-[150] bg-surface overflow-y-auto pb-12 flex flex-col"
+          >
+            <SubScreenHeader title="SIP Configuration" onBack={() => setActiveSubScreen(null)} />
+
+            <main className="max-w-xl mx-auto w-full px-5 pt-6 text-left space-y-6">
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Set up active Systematic Investment Plans. These are classified as investments and tracked within your net wealth telemetry metrics.
+              </p>
+
+              {/* Form to Add SIP */}
+              <form onSubmit={handleAddSip} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
+                <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Create New SIP</h3>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Fund Name</label>
+                  <input
+                    type="text"
+                    value={sipFundName}
+                    onChange={(e) => setSipFundName(e.target.value)}
+                    placeholder="e.g. Parag Parikh Flexi Cap, Axis Bluechip"
+                    className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
+                    <input
+                      type="number"
+                      value={sipAmount}
+                      onChange={(e) => setSipAmount(e.target.value)}
+                      placeholder="e.g. 5000"
+                      className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-bold text-on-surface"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Deduction Date</label>
+                    <select
+                      value={sipDate}
+                      onChange={(e) => setSipDate(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-xs bg-background font-semibold text-on-surface"
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>Day {day} of the month</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Linked to salary toggle */}
+                <div className="flex items-center justify-between py-2 border-t border-outline-variant/10">
+                  <div className="text-left pr-4">
+                    <span className="text-sm font-semibold block text-on-surface">Link with salary cycle</span>
+                    <span className="text-[10px] text-on-surface-variant font-medium">Auto-reserve this SIP amount when monthly salary is credited</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSipLinked(!sipLinked)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                      sipLinked ? 'bg-primary' : 'bg-outline-variant'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                        sipLinked ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold tracking-widest uppercase text-xs rounded-xl shadow-md transition-all active:scale-[0.98]"
+                >
+                  Save SIP
+                </button>
+              </form>
+
+              {/* List of Active SIPs */}
+              <div className="space-y-3">
+                <h3 className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider pl-1">Active SIPs List</h3>
+
+                {activeSipsList.length === 0 ? (
+                  <div className="text-center py-8 bg-surface-container-lowest border border-outline-variant/15 rounded-2xl text-on-surface-variant text-xs font-medium uppercase tracking-wider">
+                    No active SIP configurations found
+                  </div>
+                ) : (
+                  activeSipsList.map((sipItem) => (
+                    <div key={sipItem._id} className="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex items-center justify-between hover:border-primary transition-colors">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-on-surface">{sipItem.name}</span>
+                          {sipItem.tags?.includes('linked_to_salary') && (
+                            <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-tertiary-fixed/20 border border-tertiary/10 text-on-tertiary-fixed-variant">
+                              Salary Linked
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant mt-1 uppercase font-semibold tracking-wider">
+                          Deduction Date: {sipItem.sipDetails?.nextDate ? new Date(sipItem.sipDetails.nextDate).getDate() : 10}th of the month
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="text-sm font-bold text-tertiary">{formatCurrency(sipItem.investedAmount)}</span>
+                        <button
+                          onClick={() => handleDeleteSip(sipItem._id)}
+                          className="p-1 rounded text-outline hover:text-error hover:bg-error/5"
+                          title="Delete SIP"
+                        >
+                          <span className="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </main>
+          </motion.div>
+        )}
+
+        {/* 4. Travel & Bills Budget Limits Sub-screen */}
+        {activeSubScreen === 'budget' && (
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+            className="fixed inset-0 z-[150] bg-surface overflow-y-auto pb-12 flex flex-col"
+          >
+            <SubScreenHeader title="Budget Limits" onBack={() => setActiveSubScreen(null)} />
+
+            <main className="max-w-xl mx-auto w-full px-5 pt-6 text-left space-y-6">
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Define monthly expense limits for Travel and Bills. These are used to populate your Home dashboard cards and warning thresholds.
+              </p>
+
+              <form onSubmit={handleSaveBudget} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Travel Budget (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={budTravel}
+                      onChange={(e) => setBudTravel(e.target.value)}
+                      placeholder="e.g. 5000"
+                      className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Bills &amp; Utilities Estimate (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={budBills}
+                      onChange={(e) => setBudBills(e.target.value)}
+                      placeholder="e.g. 8000"
+                      className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-bold text-on-surface"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-bold tracking-widest uppercase text-xs rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center"
+                >
+                  Save Budgets
+                </button>
+              </form>
+            </main>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

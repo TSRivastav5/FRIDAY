@@ -217,6 +217,37 @@ export const useFinanceStore = create(
         }
       },
 
+      updateProfile: async (updatedProfile) => {
+        set({ isLoading: true, error: null });
+        try {
+          const data = await fridayAPI.updateProfile(updatedProfile);
+          set({ user: data.user, isLoading: false });
+          localStorage.setItem("friday_user", JSON.stringify(data.user));
+          return data;
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
+      deleteSalary: async (id) => {
+        set({ isLoading: true, error: null });
+        try {
+          await fridayAPI.deleteSalary(id);
+          // If we deleted the current active salary, clear active salary and currentAllocation
+          const currentSalary = get().salary;
+          if (currentSalary && currentSalary._id === id) {
+            set({ salary: null, currentAllocation: null });
+          }
+          // Remove from salary history
+          const updatedHistory = get().salaryHistory.filter(s => s._id !== id);
+          set({ salaryHistory: updatedHistory, isLoading: false });
+        } catch (error) {
+          set({ error: error.message, isLoading: false });
+          throw error;
+        }
+      },
+
       resetAllocation: async () => {
         set({ isLoading: true, error: null });
         try {

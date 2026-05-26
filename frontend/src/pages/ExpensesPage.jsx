@@ -125,6 +125,16 @@ export const ExpensesPage = () => {
     }
   };
 
+  const handleDeleteSalary = async (id) => {
+    if (window.confirm("Are you sure you want to delete this salary entry? All allocations for this month will be removed.")) {
+      try {
+        await store.deleteSalary(id);
+      } catch (err) {
+        alert("Failed to delete salary: " + err.message);
+      }
+    }
+  };
+
   // Convert "2026-05" database string into readable long dates (e.g. "May 2026")
   const getMonthYearString = (monthStr) => {
     if (!monthStr) return "";
@@ -618,7 +628,19 @@ export const ExpensesPage = () => {
                     <h3 className="text-base font-bold text-on-surface">{getMonthYearString(sal.month)}</h3>
                     <p className="text-[10px] text-on-surface-variant font-semibold uppercase tracking-wider mt-0.5">Credited Salary</p>
                   </div>
-                  <span className="text-lg font-black text-primary">{formatCurrency(sal.amount)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-black text-primary">{formatCurrency(sal.amount)}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSalary(sal._id);
+                      }}
+                      className="p-1 rounded-lg text-outline hover:text-error hover:bg-error/5 transition-colors flex items-center justify-center shrink-0"
+                      title="Delete salary record"
+                    >
+                      <span className="material-symbols-outlined text-lg">delete</span>
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Progress bar for paid status */}

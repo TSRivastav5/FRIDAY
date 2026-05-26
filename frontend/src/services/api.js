@@ -120,6 +120,9 @@ class FridayAPI {
   updateAllocation(id, allocation, paidAllocations) {
     return this.put(`/salary/${id}/allocation`, { allocation, paidAllocations });
   }
+  deleteSalary(id) {
+    return this.del(`/salary/${id}`);
+  }
 
   // Expenses
   getExpenses(params = {}) {
