@@ -41,8 +41,8 @@ export const InvestmentsPage = () => {
       };
 
       const [niftyResult, sensexResult] = await Promise.all([
-        fetchOne('^NSEI'),
-        fetchOne('^BSESN'),
+        fetchOne('NSEI'),
+        fetchOne('BSESN'),
       ]);
 
       const anyStale = niftyResult.stale || sensexResult.stale;
