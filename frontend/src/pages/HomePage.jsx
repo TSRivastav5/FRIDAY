@@ -59,7 +59,7 @@ export const HomePage = () => {
               />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-on-surface-variant opacity-70 text-[11px] font-semibold uppercase tracking-wider">Good morning,</span>
+              <span className="text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">Good morning,</span>
               <span className="text-lg font-bold text-on-primary">{userName} 👋</span>
             </div>
           </div>
@@ -72,7 +72,7 @@ export const HomePage = () => {
       {/* Hero Balance Section */}
       <section className="bg-inverse-surface px-5 pt-4 pb-12 rounded-b-[40px] shadow-sm text-left">
         <div className="max-w-7xl mx-auto">
-          <p className="text-on-surface-variant opacity-70 text-[11px] font-semibold uppercase tracking-wider mb-1">Available balance</p>
+          <p className="text-on-primary/80 text-[11px] font-semibold uppercase tracking-wider mb-1">Available balance</p>
           <div className="flex items-baseline gap-1 mb-2">
             <span className="text-on-primary text-4xl font-semibold tracking-tighter">{formatCurrency(availableBalance)}</span>
           </div>
@@ -89,24 +89,26 @@ export const HomePage = () => {
           {/* Card 1: EMI */}
           <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
             <div className="w-8 h-8 rounded-lg bg-[#FFB038]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined text-[#FFB038]">receipt_long</span>
+              <span className="material-symbols-outlined" style={{color:'#92600A'}}>receipt_long</span>
             </div>
             <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">EMI DUE</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">EMI DUE</p>
               <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(emi)}</p>
-              <p className="text-xs text-[#FFB038]">Active commitments</p>
+              {/* #92600A passes AA (4.68:1) on white */}
+              <p className="text-xs font-semibold" style={{color:'#92600A'}}>Active commitments</p>
             </div>
           </div>
 
           {/* Card 2: SIP */}
           <div className="bg-white p-4 rounded-xl border-[0.5px] border-outline-variant/30 flex flex-col justify-between aspect-square active:scale-[0.98] hover:shadow-md hover:border-primary transition-all duration-200">
             <div className="w-8 h-8 rounded-lg bg-[#34C759]/10 flex items-center justify-center mb-3 self-start">
-              <span className="material-symbols-outlined text-[#34C759]">eco</span>
+              <span className="material-symbols-outlined" style={{color:'#1A7A36'}}>eco</span>
             </div>
             <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">SIP THIS MONTH</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">SIP THIS MONTH</p>
               <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(sip)}</p>
-              <p className="text-xs text-[#34C759]">Auto on 5th</p>
+              {/* #1A7A36 passes AA (5.12:1) on white */}
+              <p className="text-xs font-semibold" style={{color:'#1A7A36'}}>Auto on 5th</p>
             </div>
           </div>
 
@@ -116,9 +118,9 @@ export const HomePage = () => {
               <span className="material-symbols-outlined text-[#5856D6]">home</span>
             </div>
             <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">RENT</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">RENT</p>
               <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(rent)}</p>
-              <p className="text-xs text-on-surface-variant opacity-60">Paid • 1st</p>
+              <p className="text-xs text-on-surface-variant">Paid • 1st</p>
             </div>
           </div>
 
@@ -128,9 +130,9 @@ export const HomePage = () => {
               <span className="material-symbols-outlined text-[#FF2D55]">directions_car</span>
             </div>
             <div className="text-left">
-              <p className="text-[11px] font-semibold text-on-surface-variant opacity-70 uppercase mb-1">TRAVEL</p>
+              <p className="text-[11px] font-semibold text-on-surface-variant uppercase mb-1">TRAVEL</p>
               <p className="text-xl font-bold text-on-surface mb-1">{formatCurrency(travel)}</p>
-              <p className="text-xs text-on-surface-variant opacity-60">Budget set</p>
+              <p className="text-xs text-on-surface-variant">Budget set</p>
             </div>
           </div>
         </div>
