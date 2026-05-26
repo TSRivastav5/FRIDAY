@@ -73,6 +73,10 @@ export const useFinanceStore = create(
             currentAllocation: null,
             chatMessages: [],
           });
+          // Fetch new user's financial telemetry data
+          await get().fetchCurrentSalary();
+          await get().fetchInvestments();
+          await get().fetchExpenses();
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });
@@ -101,6 +105,10 @@ export const useFinanceStore = create(
           });
           // Also set it in localStorage so returning users don't have to enter it again for the lockscreen
           localStorage.setItem("friday_pin", pin);
+          // Fetch new user's financial telemetry data
+          await get().fetchCurrentSalary();
+          await get().fetchInvestments();
+          await get().fetchExpenses();
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });
@@ -126,6 +134,10 @@ export const useFinanceStore = create(
             currentAllocation: null,
             chatMessages: [],
           });
+          // Fetch new user's financial telemetry data
+          await get().fetchCurrentSalary();
+          await get().fetchInvestments();
+          await get().fetchExpenses();
           return data;
         } catch (error) {
           set({ error: error.message, isLoading: false });

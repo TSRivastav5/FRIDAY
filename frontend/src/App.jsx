@@ -30,8 +30,7 @@ function App() {
       store.fetchInvestments?.();
       store.fetchExpenses?.();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [store.isAuthenticated]);
 
   // Also re-fetch immediately after lock screen unlocks
   useEffect(() => {
