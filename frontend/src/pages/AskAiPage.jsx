@@ -492,7 +492,7 @@ export const AskAiPage = () => {
               <strong>Error:</strong> {aiError}
               <br />
               <span style={{ fontSize: 11, opacity: 0.7 }}>
-                Check browser console and Render logs for full details. Make sure GEMINI_API_KEY is set in Render → Environment.
+                Check browser console and Render logs for full details. Make sure GROQ_API_KEY is set in Render → Environment.
               </span>
             </div>
           )}

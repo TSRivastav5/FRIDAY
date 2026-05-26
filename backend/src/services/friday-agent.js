@@ -1,11 +1,11 @@
 // ============================================================
-// 🤖 FRIDAY AGENT — The AI Brain (Powered by FREE Gemini)
+// 🤖 FRIDAY AGENT — The AI Brain (Powered by Groq Cloud)
 // ============================================================
-// This is the heart of FRIDAY. It uses Google Gemini (free)
+// This is the heart of FRIDAY. It uses Groq (llama-3.3-70b-versatile)
 // to think, reason, and give financial advice.
 // ============================================================
 
-import genAI, { geminiModel, geminiProModel } from "../config/gemini.js";
+import groq from "../config/groq.js";
 import { SalaryAnalyzer } from "./salary-analyzer.js";
 import { InvestmentAdvisor } from "./investment-advisor.js";
 import { StockService } from "./stock-service.js";
@@ -16,25 +16,28 @@ import Investment from "../models/Investment.js";
 import Salary from "../models/Salary.js";
 
 // ──────────────────────────────────────────────────
-// 🛠️ GEMINI TOOL DECLARATIONS
+// 🛠️ GROQ/OPENAI TOOL DECLARATIONS
 // ──────────────────────────────────────────────────
-const getLiveMarketQuoteDeclaration = {
-  name: "getLiveMarketQuote",
-  description: "Fetches live price, NAV, or quote for financial assets like Nifty 50, Sensex, Gold price, or mutual funds in India.",
-  parameters: {
-    type: "OBJECT",
-    properties: {
-      assetName: {
-        type: "STRING",
-        description: "The name of the asset (e.g. 'Nifty 50', 'Sensex', 'Gold', or mutual fund names like 'Parag Parikh Flexi Cap Fund')."
+const getLiveMarketQuoteTool = {
+  type: "function",
+  function: {
+    name: "getLiveMarketQuote",
+    description: "Fetches live price, NAV, or quote for financial assets like Nifty 50, Sensex, Gold price, or mutual funds in India.",
+    parameters: {
+      type: "object",
+      properties: {
+        assetName: {
+          type: "string",
+          description: "The name of the asset (e.g. 'Nifty 50', 'Sensex', 'Gold', or mutual fund names like 'Parag Parikh Flexi Cap Fund')."
+        },
+        assetType: {
+          type: "string",
+          enum: ["stock", "mutual_fund", "index", "gold"],
+          description: "The category of asset: stock, mutual_fund, index, or gold."
+        }
       },
-      assetType: {
-        type: "STRING",
-        enum: ["stock", "mutual_fund", "index", "gold"],
-        description: "The category of asset: stock, mutual_fund, index, or gold."
-      }
-    },
-    required: ["assetName", "assetType"]
+      required: ["assetName", "assetType"]
+    }
   }
 };
 
@@ -129,19 +132,7 @@ export class FridayAgent {
     this.investmentAdvisor = new InvestmentAdvisor();
     this.stockService = new StockService();
     this.mfService = new MutualFundService();
-    
-    // Custom model instance for chat with market quote tools enabled
-    this.chatModel = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: {
-        temperature: 0.3,
-        topP: 0.8,
-        maxOutputTokens: 2048,
-      },
-      tools: [{
-        functionDeclarations: [getLiveMarketQuoteDeclaration]
-      }]
-    });
+    this.groq = groq;
   }
 
   async executeLiveMarketQuote(assetName, assetType) {
@@ -276,53 +267,53 @@ You can use the getLiveMarketQuote tool to search for live market prices, gold r
 Respond naturally as FRIDAY:
 `;
 
-      const genAIArgs = {
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        tools: [{
-          functionDeclarations: [getLiveMarketQuoteDeclaration]
-        }]
-      };
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        tools: [getLiveMarketQuoteTool],
+        temperature: 0.3,
+        max_tokens: 2048,
+      });
 
-      let result = await this.chatModel.generateContent(genAIArgs);
+      const choice = response.choices[0];
+      const messageObj = choice.message;
       let responseText = "";
 
-      // Check for function calls
-      const functionCalls = result.response.functionCalls;
-      if (functionCalls && functionCalls.length > 0) {
-        const call = functionCalls[0];
-        console.log("Model requested tool call:", call.name, call.args);
+      if (messageObj.tool_calls && messageObj.tool_calls.length > 0) {
+        const toolCall = messageObj.tool_calls[0];
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+        
+        console.log("Model requested tool call:", functionName, functionArgs);
         
         let toolResult;
-        if (call.name === "getLiveMarketQuote") {
-          toolResult = await this.executeLiveMarketQuote(call.args.assetName, call.args.assetType);
+        if (functionName === "getLiveMarketQuote") {
+          toolResult = await this.executeLiveMarketQuote(functionArgs.assetName, functionArgs.assetType);
         } else {
           toolResult = { error: "Unknown tool" };
         }
 
-        // Send function execution result back to Gemini
-        const followUpArgs = {
-          contents: [
-            { role: "user", parts: [{ text: prompt }] },
-            result.response.candidates[0].content, // model call response
+        // Send function execution result back to Groq
+        const followUpResponse = await this.groq.chat.completions.create({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "user", content: prompt },
+            messageObj,
             {
-              role: "function",
-              parts: [{
-                functionResponse: {
-                  name: call.name,
-                  response: { result: toolResult }
-                }
-              }]
+              role: "tool",
+              tool_call_id: toolCall.id,
+              name: functionName,
+              content: JSON.stringify(toolResult)
             }
           ],
-          tools: [{
-            functionDeclarations: [getLiveMarketQuoteDeclaration]
-          }]
-        };
+          tools: [getLiveMarketQuoteTool],
+          temperature: 0.3,
+          max_tokens: 2048,
+        });
 
-        const followUpResult = await this.chatModel.generateContent(followUpArgs);
-        responseText = followUpResult.response.text();
+        responseText = followUpResponse.choices[0].message.content;
       } else {
-        responseText = result.response.text();
+        responseText = messageObj.content;
       }
 
       return {
@@ -331,9 +322,7 @@ Respond naturally as FRIDAY:
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      // Log the REAL error — never swallow it silently
-      console.error("FRIDAY Chat Error:", error.message, error?.status, error?.errorDetails);
-      // Re-throw so the route layer returns real error details to the frontend
+      console.error("FRIDAY Chat Error:", error.message, error?.status);
       throw error;
     }
   }
@@ -404,11 +393,15 @@ ${JSON.stringify(defaultAllocation, null, 2)}
   ]
 }
 `;
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+        max_tokens: 4096,
+      });
+      let responseText = response.choices[0].message.content;
 
-      const result = await geminiProModel.generateContent(prompt);
-      let responseText = result.response.text();
-
-      // Clean up Gemini response (remove markdown code blocks if any)
+      // Clean up Groq response (remove markdown code blocks if any)
       responseText = responseText
         .replace(/```json\n?/g, "")
         .replace(/```\n?/g, "")
@@ -419,7 +412,7 @@ ${JSON.stringify(defaultAllocation, null, 2)}
         aiAnalysis = JSON.parse(responseText);
       } catch (parseError) {
         // If JSON parsing fails, use default allocation with generic insights
-        console.warn("Gemini response not valid JSON, using defaults");
+        console.warn("Groq response not valid JSON, using defaults");
         aiAnalysis = {
           greeting: `Welcome back, Boss! 💰 ₹${salaryAmount.toLocaleString("en-IN")} credited. Let me sort this out for you.`,
           adjustedAllocation: defaultAllocation.allocation,
@@ -561,10 +554,15 @@ Keep total recommendations = budget amount (₹${budget.toLocaleString("en-IN")}
 Be specific and actionable. Indian context only.
 `;
 
-      const result = await geminiProModel.generateContent(prompt);
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 2048,
+      });
       return {
         success: true,
-        advice: result.response.text(),
+        advice: response.choices[0].message.content,
         marketData: {
           stocks: stockData.status === "fulfilled" ? stockData.value : null,
           mutualFunds: mfData.status === "fulfilled" ? mfData.value : null,
@@ -611,10 +609,15 @@ ${JSON.stringify(context.expenseSummary, null, 2)}
 Be specific with amounts and percentages.
 `;
 
-      const result = await geminiModel.generateContent(prompt);
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 2048,
+      });
       return {
         success: true,
-        analysis: result.response.text(),
+        analysis: response.choices[0].message.content,
       };
     } catch (error) {
       return {
@@ -683,10 +686,15 @@ ${JSON.stringify(livePrices, null, 2)}
 Be direct and specific. Boss wants actionable advice.
 `;
 
-      const result = await geminiProModel.generateContent(prompt);
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096,
+      });
       return {
         success: true,
-        review: result.response.text(),
+        review: response.choices[0].message.content,
         livePrices,
       };
     } catch (error) {
@@ -723,8 +731,13 @@ ${JSON.stringify(context, null, 2)}
 Respond as FRIDAY:
 `;
 
-      const result = await geminiModel.generateContent(prompt);
-      let insight = result.response.text().trim();
+      const response = await this.groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 1024,
+      });
+      let insight = response.choices[0].message.content.trim();
 
       // Clean up markdown/formatting
       insight = insight.replace(/\*\*/g, "").replace(/`/g, "").trim();

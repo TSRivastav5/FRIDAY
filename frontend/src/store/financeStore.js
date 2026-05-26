@@ -483,7 +483,7 @@ export const useFinanceStore = create(
           // Also push it as a visible assistant message so it shows in the chat thread
           get().addChatMessage(
             "assistant",
-            `❌ Error: ${errMsg}\n\nCheck Render logs and make sure GEMINI_API_KEY is set in your Render environment variables.`
+            `❌ Error: ${errMsg}\n\nCheck Render logs and make sure GROQ_API_KEY is set in your Render environment variables.`
           );
           throw error;
         }

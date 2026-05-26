@@ -14,18 +14,87 @@ const agent = new FridayAgent();
 // 💬 Chat with FRIDAY
 router.post("/chat", async (req, res) => {
   try {
-    // Guard: catch missing API key before making the Gemini call
-    if (!process.env.GEMINI_API_KEY) {
+    // Guard: catch missing API key before making the Groq call
+    if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({
         success: false,
-        error: "GEMINI_API_KEY is not set on the server",
-        fix: "Add GEMINI_API_KEY to your Render → Environment → Environment Variables",
+        error: "GROQ_API_KEY is not set on the server",
+        fix: "Add GROQ_API_KEY to your Render → Environment → Environment Variables",
       });
     }
 
-    const { message } = req.body;
+    const { message, messages, userData } = req.body;
+
+    // 1. If request comes in the custom "messages" format (from direct fetch prompt)
+    if (messages && Array.isArray(messages) && messages.length > 0) {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",   // free, fast, smart
+          max_tokens: 1024,
+          temperature: 0.7,
+          messages: [
+            {
+              role: "system",
+              content: buildSystemPrompt(userData || {})
+            },
+            ...messages.map(m => ({
+              role: m.role,
+              content: m.content
+            }))
+          ]
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Groq error:", response.status, data);
+        return res.status(response.status).json({
+          error: data?.error?.message || `Groq error ${response.status}`,
+          code: response.status
+        });
+      }
+
+      const text = data?.choices?.[0]?.message?.content;
+
+      if (!text) {
+        return res.status(500).json({ error: "Empty response from Groq" });
+      }
+
+      // Save to chat history if user is authenticated
+      if (req.user && req.user.id) {
+        const today = new Date().toISOString().slice(0, 10);
+        const lastUserMsg = messages[messages.length - 1]?.content || "Hello";
+        await ChatHistory.findOneAndUpdate(
+          { userId: req.user.id, sessionDate: today },
+          {
+            $push: {
+              messages: [
+                { role: "user", content: lastUserMsg },
+                { role: "assistant", content: text },
+              ],
+            },
+          },
+          { upsert: true }
+        );
+      }
+
+      return res.json({
+        success: true,
+        reply: text,
+        message: text,
+        response: text
+      });
+    }
+
+    // 2. Default: standard app chat format using the agent
     if (!message) {
-      return res.status(400).json({ error: "Message is required" });
+      return res.status(400).json({ error: "Message or messages array is required" });
     }
 
     const response = await agent.chat(req.user.id, message);
@@ -51,9 +120,12 @@ router.post("/chat", async (req, res) => {
       { upsert: true }
     );
 
-    res.json(response);
+    res.json({
+      ...response,
+      reply: response.message,
+      response: response.message
+    });
   } catch (error) {
-    // Return the REAL error — never a fake friendly message
     console.error("AI chat route error:", error.message, error?.status);
     return res.status(500).json({
       success: false,
@@ -178,5 +250,56 @@ router.get("/chat-history", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// ── System prompt ─────────────────────────────────────────────
+function buildSystemPrompt(userData) {
+  const {
+    name = "there",
+    salary = 0,
+    emiTotal = 0,
+    emis = [],
+    rent = 0,
+    sipTotal = 0,
+    sips = [],
+    travelBudget = 0,
+    billsBudget = 0,
+    surplus = 0,
+    lastSalaryMonth = "this month",
+  } = userData;
+
+  const fmt = (n) => Number(n || 0).toLocaleString("en-IN");
+
+  const emiList = emis.length
+    ? emis.map(e => `  - ${e.label}: ₹${fmt(e.amount)}`).join("\n")
+    : "  - No EMIs configured yet";
+
+  const sipList = sips.length
+    ? sips.map(s => `  - ${s.fundName}: ₹${fmt(s.amount)}/month`).join("\n")
+    : "  - No SIPs configured yet";
+
+  return `You are FRIDAY — Financial Resource & Investment Decision AI for You.
+You are a smart personal finance assistant for \${name}.
+
+## \${name}'s financial profile:
+- Monthly salary: ₹\${fmt(salary)} (\${lastSalaryMonth})
+- Available balance after all commitments: ₹\${fmt(surplus)}
+- Total EMI: ₹\${fmt(emiTotal)}
+\${emiList}
+- Rent: ₹\${fmt(rent)}
+- Total SIP: ₹\${fmt(sipTotal)}
+\${sipList}
+- Travel budget: ₹\${fmt(travelBudget)}
+- Bills & utilities: ₹\${fmt(billsBudget)}
+
+## How you behave:
+- Direct and human. No jargon. No corporate speak.
+- Always use Indian Rupee ₹ and Indian number format (lakhs, crores).
+- Show the math clearly when answering money questions.
+- Give ONE clear recommendation, not a vague list.
+- Short responses — this is a mobile app.
+- Never say you lack access to data — all data is provided above.
+- Never say "consult a financial advisor" for general questions.
+- Call the user by name: \${name}. Never say "Boss".
+- Plain text only. No markdown symbols like * or #.`;
+}
 
 export default router;

@@ -17,12 +17,12 @@ import { errorHandler } from "./middleware/errorHandler.js";
 dotenv.config();
 
 // ── Fail-fast: catch missing env vars on startup ─────────────────────────────
-const REQUIRED_ENV = ["GEMINI_API_KEY", "MONGODB_URI", "JWT_SECRET"];
+const REQUIRED_ENV = ["GROQ_API_KEY", "MONGODB_URI", "JWT_SECRET"];
 const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missingEnv.length > 0) {
   console.error("\n❌ MISSING REQUIRED ENVIRONMENT VARIABLES:", missingEnv.join(", "));
   console.error("   → On Render: go to Dashboard → Your Service → Environment → Add variables");
-  console.error("   → Required: GEMINI_API_KEY, MONGODB_URI, JWT_SECRET");
+  console.error("   → Required: GROQ_API_KEY, MONGODB_URI, JWT_SECRET");
   console.error("   → The server will start but AI routes will return 500 until these are set.\n");
 }
 
@@ -79,12 +79,12 @@ app.get("/api/health", (req, res) => {
     status: "🟢 FRIDAY is alive!",
     version: "1.0.0",
     cost: "₹0/month",
-    ai: "Google Gemini (free)",
+    ai: "Groq Cloud (free)",
     database: "MongoDB Atlas (free)",
     timestamp: new Date().toISOString(),
     // Safe diagnostic — only shows presence, never the key value
-    geminiKeySet: !!process.env.GEMINI_API_KEY,
-    geminiKeyLength: process.env.GEMINI_API_KEY?.length || 0,
+    groqKeySet: !!process.env.GROQ_API_KEY,
+    groqKeyLength: process.env.GROQ_API_KEY?.length || 0,
   });
 });
 
@@ -110,7 +110,7 @@ const startServer = async () => {
 ║  🤖 FRIDAY Backend (100% FREE)                ║
 ║  📡 http://localhost:${PORT}                     ║
 ║  🗄️  MongoDB Atlas (free) ✅                   ║
-║  🧠 Google Gemini (free) ✅                    ║
+║  🧠 Groq Cloud (free) ✅                       ║
 ║  📈 Yahoo Finance (free) ✅                    ║
 ║  📊 MFAPI.in (free) ✅                        ║
 ║  💰 Total Cost: ₹0/month                      ║
