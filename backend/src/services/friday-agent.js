@@ -126,6 +126,34 @@ Use one of the following schemas for the card content:
 Always ensure the JSON inside [STRUCTURED_CARD]...[/STRUCTURED_CARD] is perfectly valid JSON without backticks, syntax errors, or wrapping comments.
 `;
 
+function safeParseJSArray(str) {
+  if (!str) return [];
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    const items = [];
+    const objectBlocks = str.match(/\{[^{}]+\}/g);
+    if (objectBlocks) {
+      for (const block of objectBlocks) {
+        const nameMatch = block.match(/name\s*:\s*['"](.*?)['"](?=\s*(?:,|\n|}))/i);
+        const typeMatch = block.match(/type\s*:\s*['"](.*?)['"](?=\s*(?:,|\n|}))/i);
+        const amountMatch = block.match(/amount\s*:\s*['"]?(\d+)['"]?/i);
+        const reasonMatch = block.match(/reason\s*:\s*['"](.*?)['"](?=\s*(?:,|\n|}))/i);
+        
+        if (nameMatch || typeMatch || amountMatch) {
+          items.push({
+            name: nameMatch ? nameMatch[1] : "",
+            type: typeMatch ? typeMatch[1] : "",
+            amount: amountMatch ? parseInt(amountMatch[1], 10) : 0,
+            reason: reasonMatch ? reasonMatch[1] : ""
+          });
+        }
+      }
+    }
+    return items;
+  }
+}
+
 export class FridayAgent {
   constructor() {
     this.salaryAnalyzer = new SalaryAnalyzer();
@@ -410,9 +438,79 @@ ${JSON.stringify(defaultAllocation, null, 2)}
       let aiAnalysis;
       try {
         aiAnalysis = JSON.parse(responseText);
+
+        // Sanitize aiAnalysis fields to prevent DB validation / casting errors
+        if (aiAnalysis) {
+          if (aiAnalysis.investmentAdvice) {
+            let suggestions = aiAnalysis.investmentAdvice.suggestions;
+            if (typeof suggestions === "string") {
+              suggestions = safeParseJSArray(suggestions);
+            } else if (Array.isArray(suggestions)) {
+              if (
+                suggestions.length === 1 &&
+                typeof suggestions[0] === "string" &&
+                (suggestions[0].startsWith("[") || suggestions[0].trim().startsWith("["))
+              ) {
+                suggestions = safeParseJSArray(suggestions[0]);
+              } else {
+                suggestions = suggestions.map((item) => {
+                  if (typeof item === "string") {
+                    try {
+                      return JSON.parse(item);
+                    } catch (e) {
+                      const parsed = safeParseJSArray(item);
+                      return Array.isArray(parsed) ? parsed[0] : parsed;
+                    }
+                  }
+                  return item;
+                });
+                suggestions = suggestions.flat().filter(Boolean);
+              }
+            } else {
+              suggestions = [];
+            }
+            aiAnalysis.investmentAdvice.suggestions = suggestions;
+          }
+
+          // Sanitize insights
+          if (typeof aiAnalysis.insights === "string") {
+            try {
+              aiAnalysis.insights = JSON.parse(aiAnalysis.insights);
+            } catch (e) {
+              aiAnalysis.insights = [aiAnalysis.insights];
+            }
+          }
+          if (!Array.isArray(aiAnalysis.insights)) {
+            aiAnalysis.insights = [];
+          }
+
+          // Sanitize warnings
+          if (typeof aiAnalysis.warnings === "string") {
+            try {
+              aiAnalysis.warnings = JSON.parse(aiAnalysis.warnings);
+            } catch (e) {
+              aiAnalysis.warnings = [aiAnalysis.warnings];
+            }
+          }
+          if (!Array.isArray(aiAnalysis.warnings)) {
+            aiAnalysis.warnings = [];
+          }
+
+          // Sanitize actionItems
+          if (typeof aiAnalysis.actionItems === "string") {
+            try {
+              aiAnalysis.actionItems = JSON.parse(aiAnalysis.actionItems);
+            } catch (e) {
+              aiAnalysis.actionItems = [aiAnalysis.actionItems];
+            }
+          }
+          if (!Array.isArray(aiAnalysis.actionItems)) {
+            aiAnalysis.actionItems = [];
+          }
+        }
       } catch (parseError) {
         // If JSON parsing fails, use default allocation with generic insights
-        console.warn("Groq response not valid JSON, using defaults");
+        console.warn("Groq response not valid JSON, using defaults", parseError);
         aiAnalysis = {
           greeting: `Welcome back, Boss! 💰 ₹${salaryAmount.toLocaleString("en-IN")} credited. Let me sort this out for you.`,
           adjustedAllocation: defaultAllocation.allocation,
