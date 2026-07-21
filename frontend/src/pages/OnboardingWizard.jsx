@@ -9,6 +9,8 @@ export const OnboardingWizard = () => {
 
   const [step, setStep] = useState('pin'); // 'pin' | 'salary' | 'commitments' | 'investments' | 'summary'
   const [pin, setPin] = useState('');
+  const [pinError, setPinError] = useState('');
+  const [isSavingPin, setIsSavingPin] = useState(false);
   const [salary, setSalary] = useState('');
   
   // Custom allocations
@@ -22,14 +24,23 @@ export const OnboardingWizard = () => {
   const remaining = Math.max(0, parsedSalary - totalAllocated);
 
   const handlePinKeyPress = (num) => {
-    if (pin.length >= 4) return;
+    if (pin.length >= 4 || isSavingPin) return;
     const newVal = pin + num;
     setPin(newVal);
+    setPinError('');
 
     if (newVal.length === 4) {
-      setTimeout(() => {
-        store.setPin(newVal);
-        setStep('salary');
+      setTimeout(async () => {
+        setIsSavingPin(true);
+        try {
+          await store.setPin(newVal);
+          setStep('salary');
+        } catch (err) {
+          setPinError(err.message || 'Could not save PIN — please try again.');
+          setPin('');
+        } finally {
+          setIsSavingPin(false);
+        }
       }, 300);
     }
   };
@@ -117,6 +128,13 @@ export const OnboardingWizard = () => {
                 <p className="text-xs text-white/50 leading-relaxed px-4">Set a 4-digit security PIN to quickly and securely login to your account next time.</p>
               </div>
 
+              {pinError && (
+                <p className="text-[11px] text-error font-semibold uppercase tracking-wider px-4 text-center">{pinError}</p>
+              )}
+              {isSavingPin && !pinError && (
+                <p className="text-[10px] text-white/40 uppercase tracking-wider">Saving PIN…</p>
+              )}
+
               {/* Dot Indicators */}
               <div className="flex gap-4 py-2">
                 {[0, 1, 2, 3].map((idx) => (
@@ -137,7 +155,8 @@ export const OnboardingWizard = () => {
                   <button
                     key={num}
                     onClick={() => handlePinKeyPress(num.toString())}
-                    className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all"
+                    disabled={isSavingPin}
+                    className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                   >
                     {num}
                   </button>
@@ -145,13 +164,15 @@ export const OnboardingWizard = () => {
                 <div />
                 <button
                   onClick={() => handlePinKeyPress('0')}
-                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all"
+                  disabled={isSavingPin}
+                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                 >
                   0
                 </button>
                 <button
                   onClick={handlePinBackspace}
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors"
+                  disabled={isSavingPin}
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-lg">backspace</span>
                 </button>
@@ -399,8 +420,17 @@ export const OnboardingWizard = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="text-center z-10 text-[10px] font-semibold text-white/30 uppercase tracking-widest shrink-0">
-        Protocol Calibration Wizard
+      <div className="text-center z-10 shrink-0 space-y-2">
+        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">
+          Protocol Calibration Wizard
+        </p>
+        <button
+          type="button"
+          onClick={() => store.logout()}
+          className="text-[10px] text-white/40 hover:text-white/70 font-semibold uppercase tracking-widest hover:underline active:scale-95 transition-all"
+        >
+          Not you? Sign out
+        </button>
       </div>
     </div>
   );

@@ -26,15 +26,12 @@ export const useFinanceStore = create(
       isLocked: fridayAPI.isLoggedIn() && !!localStorage.getItem("friday_pin"),
       pin: localStorage.getItem("friday_pin") || null,
       setPin: async (newPin) => {
+        // Only cache the PIN locally once the backend has actually confirmed it —
+        // otherwise a failed sync leaves the lock screen checking a PIN the
+        // server never saved.
+        await fridayAPI.updatePin(newPin);
         localStorage.setItem("friday_pin", newPin);
         set({ pin: newPin });
-        if (fridayAPI.isLoggedIn()) {
-          try {
-            await fridayAPI.updatePin(newPin);
-          } catch (error) {
-            console.error("Failed to sync PIN to backend:", error);
-          }
-        }
       },
       setLocked: (locked) => set({ isLocked: locked }),
 
