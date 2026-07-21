@@ -1,65 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 
 export const LockScreen = () => {
   const store = useFinanceStore();
   const userName = store.user?.name || "Rahul";
-  const userPIN = store.pin || "1234"; // Default fallback PIN
+  const userEmail = store.user?.email;
 
-  const [mode, setMode] = useState('biometric'); // 'biometric' | 'pin'
   const [pinInput, setPinInput] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanStatus, setScanStatus] = useState('idle'); // 'idle' | 'scanning' | 'success' | 'failed'
+  const [isVerifying, setIsVerifying] = useState(false);
   const [shake, setShake] = useState(false);
-
-  // Auto-scan on load to feel interactive
-  useEffect(() => {
-    if (mode === 'biometric') {
-      handleBiometricScan();
-    }
-  }, [mode]);
-
-  const handleBiometricScan = () => {
-    if (isScanning || scanStatus === 'success') return;
-    setIsScanning(true);
-    setScanStatus('scanning');
-
-    setTimeout(() => {
-      setScanStatus('success');
-      setIsScanning(false);
-      // Seamless unlock transition
-      setTimeout(() => {
-        store.setLocked(false);
-      }, 400);
-    }, 1500);
-  };
+  const [error, setError] = useState('');
 
   const handleKeyPress = (num) => {
-    if (pinInput.length >= 4) return;
+    if (pinInput.length >= 4 || isVerifying) return;
     const newVal = pinInput + num;
     setPinInput(newVal);
 
     if (newVal.length === 4) {
-      // Validate PIN
-      if (newVal === userPIN) {
-        setTimeout(() => {
-          store.setLocked(false);
-        }, 300);
-      } else {
-        // Fail shake animation
-        setTimeout(() => {
-          setShake(true);
-          setTimeout(() => {
-            setShake(false);
-            setPinInput('');
-          }, 500);
-        }, 150);
-      }
+      verifyPin(newVal);
     }
   };
 
+  const verifyPin = async (pin) => {
+    setIsVerifying(true);
+    setError('');
+    try {
+      await store.loginPin(userEmail, pin);
+      // store.loginPin sets isLocked: false on success
+    } catch (err) {
+      setError(err.message || 'Incorrect PIN');
+      setShake(true);
+      setTimeout(() => {
+        setShake(false);
+        setPinInput('');
+        setIsVerifying(false);
+      }, 500);
+      return;
+    }
+    setIsVerifying(false);
+  };
+
   const handleBackspace = () => {
+    if (isVerifying) return;
     setPinInput(prev => prev.slice(0, -1));
   };
 
@@ -83,131 +66,73 @@ export const LockScreen = () => {
         <div className="text-center space-y-1.5">
           <h2 className="text-xl font-bold font-headline tracking-wide">Welcome Back, Boss</h2>
           <p className="text-xs text-white/50 uppercase tracking-widest font-semibold">
-            {mode === 'biometric' ? 'Scan Fingerprint to Unlock' : 'Enter 4-Digit Security PIN'}
+            Enter 4-Digit Security PIN
           </p>
+          {error && (
+            <p className="text-[10px] text-error font-semibold uppercase tracking-wider">{error}</p>
+          )}
         </div>
       </div>
 
       {/* Auth Interface */}
       <div className="w-full max-w-xs flex flex-col items-center justify-center z-10 flex-grow py-8">
         <AnimatePresence mode="wait">
-          {mode === 'biometric' ? (
-            <motion.div
-              key="biometric-pane"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="flex flex-col items-center gap-6"
+          <motion.div
+            key="pin-pane"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            className="w-full flex flex-col items-center gap-8"
+          >
+            {/* Dot Indicators */}
+            <div
+              className={`flex gap-4 py-2 ${
+                shake ? 'animate-shake' : ''
+              }`}
             >
-              {/* Glowing Biometric Scanner Button */}
-              <button
-                onClick={handleBiometricScan}
-                className={`relative w-28 h-28 rounded-full border flex items-center justify-center transition-all duration-300 ${
-                  scanStatus === 'scanning'
-                    ? 'border-primary shadow-[0_0_35px_rgba(26,86,245,0.4)] bg-primary/5'
-                    : scanStatus === 'success'
-                    ? 'border-tertiary shadow-[0_0_35px_rgba(52,199,89,0.4)] bg-tertiary/5'
-                    : 'border-white/10 hover:border-white/20 bg-white/5 active:scale-95 shadow-lg'
-                }`}
-              >
-                {/* Fingerprint Icon */}
-                <span
-                  className={`material-symbols-outlined text-5xl transition-colors duration-300 ${
-                    scanStatus === 'scanning'
-                      ? 'text-primary animate-pulse'
-                      : scanStatus === 'success'
-                      ? 'text-tertiary scale-110'
-                      : 'text-white/60'
+              {[0, 1, 2, 3].map((idx) => (
+                <div
+                  key={idx}
+                  className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
+                    pinInput.length > idx
+                      ? 'bg-primary border-primary scale-110 shadow-[0_0_10px_rgba(26,86,245,0.4)]'
+                      : 'border-white/20 bg-transparent'
                   }`}
-                  style={{ fontVariationSettings: "'wght' 300" }}
+                />
+              ))}
+            </div>
+
+            {/* Pin Keypad Grid */}
+            <div className="grid grid-cols-3 gap-y-4 gap-x-8 w-full max-w-[240px]">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => handleKeyPress(num.toString())}
+                  disabled={isVerifying}
+                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                 >
-                  {scanStatus === 'success' ? 'check_circle' : 'fingerprint'}
-                </span>
-
-                {/* Laser scan wave animation */}
-                {scanStatus === 'scanning' && (
-                  <motion.div
-                    className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent z-20"
-                    initial={{ top: '10%' }}
-                    animate={{ top: '90%' }}
-                    transition={{
-                      repeat: Infinity,
-                      repeatType: 'reverse',
-                      duration: 0.75,
-                      ease: 'easeInOut',
-                    }}
-                  />
-                )}
-              </button>
-
+                  {num}
+                </button>
+              ))}
+              <div />
+              {/* 0 */}
               <button
-                onClick={() => setMode('pin')}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-semibold tracking-wider text-white/80 active:scale-[0.98] transition-all"
+                onClick={() => handleKeyPress('0')}
+                disabled={isVerifying}
+                className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
               >
-                Use Security PIN
+                0
               </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="pin-pane"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="w-full flex flex-col items-center gap-8"
-            >
-              {/* Dot Indicators */}
-              <div
-                className={`flex gap-4 py-2 ${
-                  shake ? 'animate-shake' : ''
-                }`}
+              {/* Backspace */}
+              <button
+                onClick={handleBackspace}
+                disabled={isVerifying}
+                className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors disabled:opacity-50"
               >
-                {[0, 1, 2, 3].map((idx) => (
-                  <div
-                    key={idx}
-                    className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
-                      pinInput.length > idx
-                        ? 'bg-primary border-primary scale-110 shadow-[0_0_10px_rgba(26,86,245,0.4)]'
-                        : 'border-white/20 bg-transparent'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Pin Keypad Grid */}
-              <div className="grid grid-cols-3 gap-y-4 gap-x-8 w-full max-w-[240px]">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => handleKeyPress(num.toString())}
-                    className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all"
-                  >
-                    {num}
-                  </button>
-                ))}
-                {/* Cancel (back to biometric) */}
-                <button
-                  onClick={() => setMode('biometric')}
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined text-xl">fingerprint</span>
-                </button>
-                {/* 0 */}
-                <button
-                  onClick={() => handleKeyPress('0')}
-                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all"
-                >
-                  0
-                </button>
-                {/* Backspace */}
-                <button
-                  onClick={handleBackspace}
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">backspace</span>
-                </button>
-              </div>
-            </motion.div>
-          )}
+                <span className="material-symbols-outlined text-lg">backspace</span>
+              </button>
+            </div>
+          </motion.div>
         </AnimatePresence>
       </div>
 

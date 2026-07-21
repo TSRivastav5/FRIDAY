@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     pin: { type: String }, // Hashed 4-digit security PIN
+    role: { type: String, enum: ["user", "admin"], default: "user" },
 
     // Family member? (for multi-user family support)
     familyRole: {

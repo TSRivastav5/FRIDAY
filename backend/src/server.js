@@ -12,6 +12,7 @@ import expenseRoutes from "./routes/expense.routes.js";
 import investmentRoutes from "./routes/investment.routes.js";
 import aiRoutes from "./routes/ai.routes.js";
 import pushRoutes from "./routes/push.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 dotenv.config();
@@ -72,6 +73,7 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/investments", investmentRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/push", pushRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

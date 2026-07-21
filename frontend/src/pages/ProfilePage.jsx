@@ -666,6 +666,25 @@ export const ProfilePage = () => {
                 <span className="material-symbols-outlined text-outline">chevron_right</span>
               </button>
 
+              {/* Admin Panel Row (admins only) */}
+              {store.user?.role === 'admin' && (
+                <button
+                  onClick={() => store.setActiveTab('admin')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-surface-container transition-colors border-b border-outline-variant/10 active:scale-[0.99] duration-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                      <span className="material-symbols-outlined">shield_person</span>
+                    </div>
+                    <div className="text-left">
+                      <span className="text-sm font-semibold block text-on-surface">Admin Panel</span>
+                      <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Manage users &amp; database</span>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-outline">chevron_right</span>
+                </button>
+              )}
+
               {/* PocketPin Management Row */}
               <button
                 onClick={() => setShowPinModal(true)}

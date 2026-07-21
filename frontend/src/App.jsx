@@ -6,6 +6,7 @@ import { ExpensesPage } from './pages/ExpensesPage';
 import { InvestmentsPage } from './pages/InvestmentsPage';
 import { AskAiPage } from './pages/AskAiPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AdminPage } from './pages/AdminPage';
 import { BottomNav } from './components/BottomNav';
 import { LoginPage } from './pages/LoginPage';
 import { SalaryModal } from './components/SalaryModal';
@@ -53,6 +54,8 @@ function App() {
         return <ExpensesPage />;
       case 'profile':
         return <ProfilePage />;
+      case 'admin':
+        return <AdminPage />;
       default:
         return <HomePage />;
     }

@@ -52,6 +52,11 @@ class FridayAPI {
     return this._fetch(url, { method: "DELETE" });
   }
 
+  // Ping the backend to wake it up early (Render free tier cold-starts after inactivity)
+  warmUp() {
+    fetch(`${API_BASE}/health`).catch(() => {});
+  }
+
   // Auth
   async login(email, password) {
     const data = await this.post("/auth/login", { email, password });
@@ -195,6 +200,14 @@ class FridayAPI {
     return this.put("/auth/profile", {
       financialProfile: profile,
     });
+  }
+
+  // Admin
+  getAdminUsers() {
+    return this.get("/admin/users");
+  }
+  nukeAllUsers() {
+    return this.post("/admin/nuke-all-users");
   }
 
   // ─── Push Notifications ────────────────────────────────────────────────────

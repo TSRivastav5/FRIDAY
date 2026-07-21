@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
+import api from '../services/api';
 
 export const LoginPage = () => {
   const store = useFinanceStore();
   const [isLogin, setIsLogin] = useState(true);
   const [loginMethod, setLoginMethod] = useState('password'); // 'password' | 'pin'
   const [name, setName] = useState('');
+  const [showSlowNotice, setShowSlowNotice] = useState(false);
+
+  // Wake up the backend as soon as the page loads — Render free tier sleeps
+  // after inactivity, and the first request can otherwise take 20-50s.
+  useEffect(() => {
+    api.warmUp();
+  }, []);
+
+  // If a request is taking a while, tell the user why instead of a silent spinner.
+  useEffect(() => {
+    if (!store.isLoading) {
+      setShowSlowNotice(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowSlowNotice(true), 5000);
+    return () => clearTimeout(timer);
+  }, [store.isLoading]);
   
   const rememberedEmail = localStorage.getItem("friday_remembered_email") || '';
   const [email, setEmail] = useState(rememberedEmail);
@@ -326,6 +344,12 @@ export const LoginPage = () => {
                 isLogin ? 'Initiate Login' : 'Create Access'
               )}
             </motion.button>
+          )}
+
+          {showSlowNotice && (
+            <p className="text-[10px] text-center text-on-surface-variant font-medium leading-relaxed -mt-2">
+              First request can take up to 30s — waking up the server…
+            </p>
           )}
         </form>
 

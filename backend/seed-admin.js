@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
   familyRole: { type: String, default: "self" },
+  role: { type: String, enum: ["user", "admin"], default: "user" },
 });
 
 // Avoid model re-compilation error if this is run multiple times
@@ -41,14 +42,21 @@ async function createAdmin() {
           
           const existing = await User.findOne({ email: email.toLowerCase() });
           if (existing) {
-            console.log(`⚠️ User with email ${email} already exists! Use the login page.`);
+            if (existing.role === "admin") {
+              console.log(`✅ ${email} is already an admin. Nothing to do.`);
+            } else {
+              existing.role = "admin";
+              await existing.save();
+              console.log(`🎉 Success! ${email} has been promoted to admin. Log in via the FRIDAY dashboard to see the Admin Panel.`);
+            }
           } else {
             const hashedPassword = await bcrypt.hash(password, 12);
             await User.create({
               name: name || "Boss",
               email: email.toLowerCase(),
               password: hashedPassword,
-              familyRole: "self"
+              familyRole: "self",
+              role: "admin",
             });
             console.log(`🎉 Success! Admin protocol '${name}' created. You can now log in via the FRIDAY dashboard.`);
           }
