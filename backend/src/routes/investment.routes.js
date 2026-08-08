@@ -130,6 +130,21 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get exited/closed positions (soft-deleted via DELETE /:id) — the user's
+// record of past investments, not just what they currently hold.
+router.get("/history", async (req, res) => {
+  try {
+    const investments = await Investment.find({
+      userId: req.user.id,
+      isActive: false,
+    }).sort({ updatedAt: -1 });
+
+    res.json({ success: true, investments });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ─── In-memory cache: symbol → { data, expiresAt } ──────────────────────────
 const marketCache = new Map();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes

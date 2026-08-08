@@ -148,6 +148,9 @@ class FridayAPI {
   getInvestments() {
     return this.get("/investments");
   }
+  getInvestmentHistory() {
+    return this.get("/investments/history");
+  }
   addInvestment(inv) {
     return this.post("/investments", inv);
   }

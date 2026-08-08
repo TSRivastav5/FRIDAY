@@ -33,6 +33,8 @@ export const InvestmentsPage = () => {
   });
 
   const [goalProgress, setGoalProgress] = useState({ percentage: 0, target: 0, current: 0 });
+  const [pastInvestments, setPastInvestments] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   // 1. Fetch investments and live feed on mount
   useEffect(() => {
@@ -43,6 +45,12 @@ export const InvestmentsPage = () => {
     // hand every new user a fabricated ₹2L+ portfolio with fake gains before
     // they ever saw the empty state.
     store.fetchInvestments?.();
+
+    // Exited positions (deleted holdings) — kept as a record, not just
+    // silently dropped, so the user can still see what they used to hold.
+    fridayAPI.getInvestmentHistory()
+      .then((data) => setPastInvestments(data.investments || []))
+      .catch((e) => console.error("Failed to fetch investment history:", e));
 
     // Fetch live market feed
     const fetchMarketFeed = async () => {
@@ -630,6 +638,61 @@ export const InvestmentsPage = () => {
           </div>
         </section>
 
+        {/* Past Investments — record of exited positions, not just what's currently held */}
+        {pastInvestments.length > 0 && (
+          <section className="mt-6 text-left pb-28">
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="w-full flex justify-between items-center mb-3"
+            >
+              <h3 className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                Past Investments ({pastInvestments.length})
+              </h3>
+              <span className="material-symbols-outlined text-outline text-lg">
+                {showHistory ? 'expand_less' : 'expand_more'}
+              </span>
+            </button>
+            <AnimatePresence>
+              {showHistory && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex flex-col gap-2 overflow-hidden"
+                >
+                  {pastInvestments.map((inv) => {
+                    const gain = (inv.currentValue ?? inv.investedAmount) - inv.investedAmount;
+                    const isPositive = gain >= 0;
+                    return (
+                      <div
+                        key={inv._id}
+                        className="bg-surface-container-lowest p-3.5 rounded-xl border-[0.5px] border-outline-variant/20 opacity-70"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-on-surface truncate">{inv.name}</p>
+                            <p className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">
+                              {inv.type} · Exited
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className={`text-xs font-bold ${isPositive ? 'text-tertiary' : 'text-error'}`}>
+                              {isPositive ? '+' : ''}{formatCurrency(gain)}
+                            </p>
+                            <p className="text-[10px] text-on-surface-variant">
+                              Invested {formatCurrency(inv.investedAmount)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        )}
+
         {/* Add Asset trigger FAB */}
         <div className="fixed bottom-24 left-0 w-full px-5 z-30 pointer-events-none">
           <div className="max-w-md mx-auto pointer-events-auto">
@@ -750,15 +813,18 @@ export const InvestmentsPage = () => {
               <div className="flex gap-3">
                 <button
                   onClick={async () => {
-                    if (window.confirm("Are you sure you want to delete this asset from your portfolio tracker?")) {
+                    if (window.confirm("Are you sure you want to exit this position? It will move to your Past Investments record.")) {
                       await fridayAPI.del(`/investments/${selectedFund.id}`);
                       await store.fetchInvestments?.();
+                      fridayAPI.getInvestmentHistory()
+                        .then((data) => setPastInvestments(data.investments || []))
+                        .catch((e) => console.error("Failed to fetch investment history:", e));
                       setSelectedFund(null);
                     }
                   }}
                   className="flex-1 py-3 text-xs font-bold text-error bg-error/5 border border-error/20 hover:bg-error/10 rounded-xl transition-all text-center"
                 >
-                  Delete Asset
+                  Exit Position
                 </button>
                 <button
                   onClick={() => setSelectedFund(null)}
