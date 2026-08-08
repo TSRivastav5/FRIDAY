@@ -34,9 +34,21 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(
   cors({
-    origin: function(origin, callback) {
-      // Allow any origin for testing/Vercel deployment, or fallback to FRONTEND_URL
-      callback(null, true);
+    origin: function (origin, callback) {
+      // No Origin header (curl, server-to-server, mobile apps) — allow.
+      if (!origin) return callback(null, true);
+
+      // Explicit configured frontend origin (set FRONTEND_URL in Render env).
+      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) {
+        return callback(null, true);
+      }
+
+      // Any Vercel deployment (production + preview URLs) and localhost dev.
+      if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(origin) || /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+
+      callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
