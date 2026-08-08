@@ -66,6 +66,22 @@ app.use(
   })
 );
 
+// Strict limit on login endpoints — login-pin is a 4-digit PIN (10,000
+// combinations) and would otherwise be brute-forceable under the generic
+// 200 req/15min API limit.
+app.use(
+  ["/api/auth/login", "/api/auth/login-pin"],
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      error: "Too many login attempts. Please try again in 15 minutes.",
+    },
+  })
+);
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/salary", salaryRoutes);

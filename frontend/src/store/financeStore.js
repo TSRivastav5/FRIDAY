@@ -22,16 +22,18 @@ export const useFinanceStore = create(
       setSalaryModal: (isOpen) => set({ showSalaryModal: isOpen }),
       
       // ──────── Security State ────────
-      // Only lock if user is logged in AND has set a PIN
-      isLocked: fridayAPI.isLoggedIn() && !!localStorage.getItem("friday_pin"),
-      pin: localStorage.getItem("friday_pin") || null,
+      // Only lock if user is logged in AND has set a PIN. We never store the
+      // actual PIN value client-side — only a boolean flag that a PIN exists.
+      // The PIN itself is always verified server-side (see loginPin).
+      isLocked: fridayAPI.isLoggedIn() && localStorage.getItem("friday_has_pin") === "true",
+      hasPin: localStorage.getItem("friday_has_pin") === "true",
       setPin: async (newPin) => {
-        // Only cache the PIN locally once the backend has actually confirmed it —
-        // otherwise a failed sync leaves the lock screen checking a PIN the
+        // Only mark the PIN as set locally once the backend has actually confirmed it —
+        // otherwise a failed sync leaves the lock screen expecting a PIN the
         // server never saved.
         await fridayAPI.updatePin(newPin);
-        localStorage.setItem("friday_pin", newPin);
-        set({ pin: newPin });
+        localStorage.setItem("friday_has_pin", "true");
+        set({ hasPin: true });
       },
       setLocked: (locked) => set({ isLocked: locked }),
 
@@ -102,10 +104,9 @@ export const useFinanceStore = create(
             portfolioStats: null,
             currentAllocation: null,
             chatMessages: [],
-            pin: pin, // Set pin state on success
+            hasPin: true,
           });
-          // Also set it in localStorage so returning users don't have to enter it again for the lockscreen
-          localStorage.setItem("friday_pin", pin);
+          localStorage.setItem("friday_has_pin", "true");
           // Fetch new user's financial telemetry data
           await get().fetchCurrentSalary();
           await get().fetchInvestments();
@@ -270,11 +271,17 @@ export const useFinanceStore = create(
 
       logout: () => {
         fridayAPI.logout();
+        // Clear PIN flags too — otherwise a different user logging in on this
+        // browser inherits a "has PIN" flag and gets stuck on the lock screen
+        // with no PIN the backend actually recognizes for their account.
+        localStorage.removeItem("friday_has_pin");
+        localStorage.removeItem("friday_pin");
         // Full state wipe — no data should survive across user sessions
         set({
           user: null,
           isAuthenticated: false,
           isLocked: false,
+          hasPin: false,
           salary: null,
           salaryHistory: [],
           expenses: [],
@@ -292,10 +299,13 @@ export const useFinanceStore = create(
         try {
           await fridayAPI.deleteAccount();
           fridayAPI.logout();
+          localStorage.removeItem("friday_has_pin");
+          localStorage.removeItem("friday_pin");
           set({
             user: null,
             isAuthenticated: false,
             isLocked: false,
+            hasPin: false,
             salary: null,
             salaryHistory: [],
             expenses: [],

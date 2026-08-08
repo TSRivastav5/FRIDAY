@@ -23,6 +23,13 @@ export const OnboardingWizard = () => {
   const totalAllocated = emi + rent + bills + sip;
   const remaining = Math.max(0, parsedSalary - totalAllocated);
 
+  // Future value of a monthly SIP at 12% annual return over 5 years (60 months)
+  const monthlyRate = 0.12 / 12;
+  const sipFiveYearValue = sip > 0
+    ? sip * ((Math.pow(1 + monthlyRate, 60) - 1) / monthlyRate) * (1 + monthlyRate)
+    : 0;
+  const formatLakhs = (n) => `₹${(n / 100000).toFixed(1)} Lakhs`;
+
   const handlePinKeyPress = (num) => {
     if (pin.length >= 4 || isSavingPin) return;
     const newVal = pin + num;
@@ -340,7 +347,7 @@ export const OnboardingWizard = () => {
 
               <div className="bg-[#34C759]/5 border border-[#34C759]/15 rounded-xl p-3.5 flex gap-3 text-xs leading-relaxed text-white/80">
                 <span className="material-symbols-outlined text-[#34C759] text-base shrink-0">energy_savings_leaf</span>
-                <p>Investing ₹{sip.toLocaleString('en-IN')} monthly at a conservative 12% annual interest grows to <span className="font-bold text-[#34C759]">₹11.6 Lakhs</span> in 5 years!</p>
+                <p>Investing ₹{sip.toLocaleString('en-IN')} monthly at a conservative 12% annual interest grows to <span className="font-bold text-[#34C759]">{formatLakhs(sipFiveYearValue)}</span> in 5 years!</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-4">

@@ -150,7 +150,7 @@ export const LoginPage = () => {
           <div className="flex items-center gap-3 justify-center">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-md">
               <svg width="24" height="24" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-                <path d="M38 8 L24 30 H34 L27 46 L46 24 H35 Z" fill="#FFFFFF" fill-rule="evenodd"/>
+                <path d="M38 8 L24 30 H34 L27 46 L46 24 H35 Z" fill="#FFFFFF" fillRule="evenodd"/>
               </svg>
             </div>
             <h2 className="text-3xl font-black text-on-surface font-headline tracking-[0.2em] uppercase">

@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+const investmentSuggestionSchema = new mongoose.Schema(
+  {
+    name: String,
+    type: String,
+    amount: Number,
+    reason: String,
+  },
+  { _id: false }
+);
+
 const salarySchema = new mongoose.Schema(
   {
     userId: {
@@ -31,14 +41,7 @@ const salarySchema = new mongoose.Schema(
     aiAnalysis: {
       greeting: String,
       insights: [String],
-      investmentSuggestions: [
-        {
-          name: String,
-          type: String,
-          amount: Number,
-          reason: String,
-        },
-      ],
+      investmentSuggestions: [investmentSuggestionSchema],
       warnings: [String],
       actionItems: [String],
     },

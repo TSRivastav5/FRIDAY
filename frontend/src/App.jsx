@@ -24,23 +24,15 @@ function App() {
     }
   }, []);
 
-  // Always fetch user's data on mount if a valid token is present
+  // Fetch user's data whenever we transition into an authenticated, unlocked state
+  // (covers both initial login and unlocking the lock screen)
   useEffect(() => {
     if (store.isAuthenticated && !store.isLocked) {
       store.fetchCurrentSalary?.();
       store.fetchInvestments?.();
       store.fetchExpenses?.();
     }
-  }, [store.isAuthenticated]);
-
-  // Also re-fetch immediately after lock screen unlocks
-  useEffect(() => {
-    if (store.isAuthenticated && !store.isLocked) {
-      store.fetchCurrentSalary?.();
-      store.fetchInvestments?.();
-      store.fetchExpenses?.();
-    }
-  }, [store.isLocked]);
+  }, [store.isAuthenticated, store.isLocked]);
 
   const renderPage = () => {
     switch (store.activeTab) {
