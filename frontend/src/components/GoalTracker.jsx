@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency, getGoalsStorageKey } from '../utils/helpers';
 import { useFinanceStore } from '../store/financeStore';
@@ -17,6 +17,15 @@ export const GoalTracker = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', target: '', current: '', category: 'Safety' });
   const [updateAmt, setUpdateAmt] = useState({ goalId: null, amount: '', action: 'add' }); // 'add' | 'withdraw'
+  const addFormRef = useRef(null);
+
+  // Keep the submit button from landing underneath the fixed bottom nav,
+  // which otherwise silently swallows the click. Must run after the expand
+  // animation finishes (not a guessed timeout), or the in-flight height
+  // change puts the button right back under the nav.
+  const scrollAddFormIntoView = () => {
+    addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(goals));
@@ -83,12 +92,14 @@ export const GoalTracker = () => {
       {/* Add Goal Form */}
       <AnimatePresence>
         {showForm && (
-          <motion.form 
+          <motion.form
+            ref={addFormRef}
             onSubmit={handleAddGoal}
-            className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 space-y-3 shadow-sm"
+            className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 space-y-3 shadow-sm scroll-mb-24"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
+            onAnimationComplete={scrollAddFormIntoView}
           >
             <input
               type="text"

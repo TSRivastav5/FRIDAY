@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency, formatDateShort } from '../utils/helpers';
@@ -7,18 +7,29 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 
 export const ExpensesPage = () => {
   const store = useFinanceStore();
-  
+
   const [selectedSalaryId, setSelectedSalaryId] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null); // 'emi' | 'rent' | 'sip' | 'travel' | 'bills'
   const [editValue, setEditValue] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ category: 'Food', amount: '', description: '' });
+  const addFormRef = useRef(null);
 
   // 1. Fetch Salary History & Expenses on mount
   useEffect(() => {
     store.fetchSalaryHistory?.();
     store.fetchExpenses?.();
   }, []);
+
+  // The fixed bottom nav bar sits over the last ~90px of the viewport. Without
+  // this, the form's submit button can render underneath it — invisible,
+  // unclickable, and clicks silently fall through to whichever nav button
+  // happens to be at that screen position instead. Scrolling must happen
+  // after the expand animation finishes, not on a guessed timeout, or the
+  // in-flight height change puts the button right back under the nav.
+  const scrollAddFormIntoView = () => {
+    addFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
 
   const salaryHistory = store.salaryHistory || [];
   const profile = store.user?.financialProfile || {};
@@ -271,7 +282,7 @@ export const ExpensesPage = () => {
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <span className="material-symbols-outlined text-[18px] text-tertiary-fixed font-variation-settings-['FILL'_1]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                <p className="text-xs text-tertiary-fixed">Verified · HDFC Bank</p>
+                <p className="text-xs text-tertiary-fixed">Credited · {profile.bankAccount || 'Bank account'}</p>
               </div>
             </div>
           </div>
@@ -499,10 +510,12 @@ export const ExpensesPage = () => {
             <AnimatePresence>
               {showForm && (
                 <motion.div
-                  className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 space-y-3 mb-4 shadow-sm"
+                  ref={addFormRef}
+                  className="bg-surface-container-lowest p-4 rounded-xl border-[0.5px] border-outline-variant/30 space-y-3 mb-4 shadow-sm scroll-mb-24"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
+                  onAnimationComplete={scrollAddFormIntoView}
                 >
                   <select
                     value={formData.category}

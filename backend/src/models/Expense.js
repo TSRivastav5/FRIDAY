@@ -1,5 +1,24 @@
 import mongoose from "mongoose";
 
+// Canonical Title Case values match the frontend's expenseCategories list
+// exactly (this is what the "Add Expense" form sends).
+const EXPENSE_CATEGORIES = [
+  "Food",
+  "Travel",
+  "Shopping",
+  "Entertainment",
+  "Bills",
+  "Health",
+  "Education",
+  "Groceries",
+  "Fuel",
+  "Subscriptions",
+  "EMI",
+  "Rent",
+  "Insurance",
+  "Other",
+];
+
 const expenseSchema = new mongoose.Schema(
   {
     userId: {
@@ -12,22 +31,14 @@ const expenseSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: [
-        "food",
-        "travel",
-        "shopping",
-        "bills",
-        "entertainment",
-        "health",
-        "education",
-        "groceries",
-        "fuel",
-        "subscriptions",
-        "emi",
-        "rent",
-        "insurance",
-        "other",
-      ],
+      enum: EXPENSE_CATEGORIES,
+      // Normalizes any case (e.g. from the AI chat tool, which isn't
+      // constrained to an exact string) so "food" / "FOOD" / "Food" all
+      // resolve to the same enum value instead of failing validation.
+      set: (v) => {
+        if (!v) return v;
+        return EXPENSE_CATEGORIES.find((c) => c.toLowerCase() === v.toLowerCase()) || v;
+      },
     },
     description: { type: String },
     date: { type: Date, default: Date.now },
