@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, getGoalsStorageKey } from '../utils/helpers';
 import { useFinanceStore } from '../store/financeStore';
 
 export const GoalTracker = () => {
   const store = useFinanceStore();
   const surplus = store.salary?.amount - ((store.currentAllocation?.emi || 0) + (store.currentAllocation?.rent || 0) + (store.currentAllocation?.sip || 0) + (store.currentAllocation?.travel || 0) + (store.currentAllocation?.bills || 0)) || 0;
 
+  const storageKey = getGoalsStorageKey(store.user);
+
   const [goals, setGoals] = useState(() => {
-    const saved = localStorage.getItem('friday_goals');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Emergency Fund', target: 100000, current: 45000, category: 'Safety' },
-      { id: '2', name: 'Dream Vacation', target: 50000, current: 15000, category: 'Leisure' }
-    ];
+    const saved = localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [showForm, setShowForm] = useState(false);
@@ -20,8 +19,8 @@ export const GoalTracker = () => {
   const [updateAmt, setUpdateAmt] = useState({ goalId: null, amount: '', action: 'add' }); // 'add' | 'withdraw'
 
   useEffect(() => {
-    localStorage.setItem('friday_goals', JSON.stringify(goals));
-  }, [goals]);
+    localStorage.setItem(storageKey, JSON.stringify(goals));
+  }, [goals, storageKey]);
 
   const handleAddGoal = (e) => {
     e.preventDefault();
@@ -174,6 +173,11 @@ export const GoalTracker = () => {
       </AnimatePresence>
 
       {/* Goal Cards Grid */}
+      {goals.length === 0 && !showForm && (
+        <div className="text-center py-6 text-xs text-on-surface-variant/60">
+          No goals yet. Tap "New Goal" to set your first savings target.
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3">
         {goals.map((g) => {
           const pct = Math.min(100, Math.round((g.current / g.target) * 100));

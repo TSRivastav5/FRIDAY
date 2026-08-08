@@ -659,8 +659,8 @@ export const ProfilePage = () => {
                     <span className="material-symbols-outlined">account_balance</span>
                   </div>
                   <div className="text-left">
-                    <span className="text-sm font-semibold block text-on-surface">Linked bank accounts</span>
-                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">HDFC, ICICI, SBI linked</span>
+                    <span className="text-sm font-semibold block text-on-surface">Linked bank account</span>
+                    <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">{store.user?.financialProfile?.bankAccount || 'Not set'}</span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline">chevron_right</span>

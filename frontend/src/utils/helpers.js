@@ -65,6 +65,11 @@ export const getCategoryIcon = (category) => {
 
 export const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
 
+// Goals are stored client-side only (no backend endpoint for them). Scoping
+// the localStorage key by user id keeps one account's goals from leaking
+// into whichever account is next logged in on the same browser.
+export const getGoalsStorageKey = (user) => `friday_goals_${user?._id || user?.id || 'anon'}`;
+
 export const getMonthName = (monthIndex) => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return months[monthIndex];

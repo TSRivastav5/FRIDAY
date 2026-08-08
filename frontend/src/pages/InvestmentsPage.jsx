@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency, getGoalsStorageKey } from '../utils/helpers';
 import fridayAPI from '../services/api';
 import { PieChart, Pie, Cell, Tooltip, AreaChart, Area, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { mcpService } from '../services/MCPService';
@@ -90,7 +90,7 @@ export const InvestmentsPage = () => {
   // 2. Fetch Goal Progress from localStorage
   useEffect(() => {
     try {
-      const savedGoals = localStorage.getItem('friday_goals');
+      const savedGoals = localStorage.getItem(getGoalsStorageKey(store.user));
       if (savedGoals) {
         const goalsList = JSON.parse(savedGoals);
         if (goalsList && goalsList.length > 0) {
@@ -107,7 +107,7 @@ export const InvestmentsPage = () => {
     } catch (e) {
       console.error("Failed to parse goals:", e);
     }
-  }, [store.investments]);
+  }, [store.investments, store.user]);
 
   // 3. Fetch dynamic AI/MCP Insight
   useEffect(() => {

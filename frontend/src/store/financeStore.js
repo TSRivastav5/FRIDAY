@@ -276,6 +276,8 @@ export const useFinanceStore = create(
         // with no PIN the backend actually recognizes for their account.
         localStorage.removeItem("friday_has_pin");
         localStorage.removeItem("friday_pin");
+        // Legacy unscoped goals key from before goals were namespaced per-user
+        localStorage.removeItem("friday_goals");
         // Full state wipe — no data should survive across user sessions
         set({
           user: null,
