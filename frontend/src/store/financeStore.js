@@ -252,15 +252,18 @@ export const useFinanceStore = create(
         try {
           const state = get();
           const id = state.salary?._id;
-          const emptyAllocation = { emi: 0, rent: 0, travel: 0, sip: 0, bills: 0, remaining: 0 };
-          
+
+          // Delete the salary record outright — zeroing its allocation left
+          // the amount itself on the server, so the "reset" silently
+          // reverted itself on the next reload/refetch.
           if (id) {
-            await fridayAPI.updateAllocation(id, emptyAllocation);
+            await fridayAPI.deleteSalary(id);
           }
-          
+
           set({
-            currentAllocation: emptyAllocation,
+            currentAllocation: null,
             salary: null,
+            salaryHistory: state.salaryHistory.filter((s) => s._id !== id),
             isLoading: false
           });
         } catch (error) {
