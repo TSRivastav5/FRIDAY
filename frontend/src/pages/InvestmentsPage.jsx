@@ -36,24 +36,13 @@ export const InvestmentsPage = () => {
 
   // 1. Fetch investments and live feed on mount
   useEffect(() => {
-    const initData = async () => {
-      // Fetch investments
-      const res = await store.fetchInvestments?.();
-      
-      // Auto-sync from mock Groww MCP if holdings are empty on first load
-      if (res && (!res.investments || res.investments.length === 0)) {
-        try {
-          setSyncingGroww(true);
-          await store.syncGrowwPortfolio?.();
-        } catch (e) {
-          console.error("Auto-sync failed:", e);
-        } finally {
-          setSyncingGroww(false);
-        }
-      }
-    };
-    
-    initData();
+    // Just load whatever the user actually has. Syncing from Groww (which
+    // currently seeds a simulated demo portfolio, not a real brokerage
+    // connection) must stay an explicit, user-initiated action via the
+    // "Connect Groww Account" button — auto-firing it here used to silently
+    // hand every new user a fabricated ₹2L+ portfolio with fake gains before
+    // they ever saw the empty state.
+    store.fetchInvestments?.();
 
     // Fetch live market feed
     const fetchMarketFeed = async () => {
