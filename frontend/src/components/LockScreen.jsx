@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
+import { ShaderBackground } from './ShaderBackground';
 
 export const LockScreen = () => {
   const store = useFinanceStore();
@@ -51,21 +52,24 @@ export const LockScreen = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-[#0d1326] text-white flex flex-col justify-between items-center px-6 pt-20 pb-12 overflow-hidden selection:bg-transparent">
-      {/* Decorative Atmospheric Lights */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[300px] h-[300px] bg-tertiary/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <div className="fixed inset-0 z-[200] bg-background text-on-surface flex flex-col justify-between items-center px-6 pt-20 pb-12 overflow-hidden selection:bg-transparent">
+      {/* Ambient shader + colored blooms, matching the login screen */}
+      <div className="absolute inset-0 opacity-70 pointer-events-none z-0">
+        <ShaderBackground />
+      </div>
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/15 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[300px] h-[300px] bg-tertiary-container/15 rounded-full blur-[100px] pointer-events-none"></div>
 
       {/* Header Info */}
-      <div className="flex flex-col items-center gap-4 z-10">
-        <div className="w-18 h-18 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center p-0.5 shadow-xl backdrop-blur-md">
+      <div className="relative flex flex-col items-center gap-4 z-10">
+        <div className="w-18 h-18 rounded-3xl bg-white/60 border border-white/80 flex items-center justify-center p-0.5 shadow-glass backdrop-blur-md">
           <div className="w-full h-full rounded-[22px] bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed font-extrabold text-3xl shadow-inner">
             {userName.substring(0, 2).toUpperCase()}
           </div>
         </div>
         <div className="text-center space-y-1.5">
           <h2 className="text-xl font-bold font-headline tracking-wide">Welcome Back, Boss</h2>
-          <p className="text-xs text-white/50 uppercase tracking-widest font-semibold">
+          <p className="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">
             Enter 4-Digit Security PIN
           </p>
           {error && (
@@ -75,7 +79,7 @@ export const LockScreen = () => {
       </div>
 
       {/* Auth Interface */}
-      <div className="w-full max-w-xs flex flex-col items-center justify-center z-10 flex-grow py-8">
+      <div className="relative w-full max-w-xs flex flex-col items-center justify-center z-10 flex-grow py-8">
         <AnimatePresence mode="wait">
           <motion.div
             key="pin-pane"
@@ -95,8 +99,8 @@ export const LockScreen = () => {
                   key={idx}
                   className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
                     pinInput.length > idx
-                      ? 'bg-primary border-primary scale-110 shadow-[0_0_10px_rgba(26,86,245,0.4)]'
-                      : 'border-white/20 bg-transparent'
+                      ? 'bg-primary border-primary scale-110 shadow-[0_0_10px_rgba(0,108,79,0.4)]'
+                      : 'border-outline-variant/50 bg-transparent'
                   }`}
                 />
               ))}
@@ -109,7 +113,7 @@ export const LockScreen = () => {
                   key={num}
                   onClick={() => handleKeyPress(num.toString())}
                   disabled={isVerifying}
-                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                  className="w-14 h-14 rounded-full border border-outline-variant/20 bg-surface-container-low active:bg-primary/20 hover:border-outline-variant/30 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {num}
                 </button>
@@ -119,7 +123,7 @@ export const LockScreen = () => {
               <button
                 onClick={() => handleKeyPress('0')}
                 disabled={isVerifying}
-                className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                className="w-14 h-14 rounded-full border border-outline-variant/20 bg-surface-container-low active:bg-primary/20 hover:border-outline-variant/30 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
               >
                 0
               </button>
@@ -127,7 +131,7 @@ export const LockScreen = () => {
               <button
                 onClick={handleBackspace}
                 disabled={isVerifying}
-                className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors disabled:opacity-50"
+                className="w-14 h-14 rounded-full flex items-center justify-center text-on-surface-variant active:text-on-surface transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-lg">backspace</span>
               </button>
@@ -137,10 +141,10 @@ export const LockScreen = () => {
       </div>
 
       {/* Switch Account Action */}
-      <div className="z-10 text-center">
+      <div className="relative z-10 text-center">
         <button
           onClick={handleSwitchAccount}
-          className="text-xs text-white/40 hover:text-white/60 font-semibold uppercase tracking-widest hover:underline active:scale-95 transition-all"
+          className="text-xs text-on-surface-variant/70 hover:text-on-surface-variant font-semibold uppercase tracking-widest hover:underline active:scale-95 transition-all"
         >
           Switch Account
         </button>

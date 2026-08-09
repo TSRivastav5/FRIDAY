@@ -80,7 +80,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
               
               {/* Input card */}
               <div className="bg-surface-container-low border-[0.5px] border-outline-variant/30 rounded-xl p-4">
-                <label className="block text-[10px] font-bold text-outline uppercase tracking-wider mb-2">Credited Amount (₹)</label>
+                <label className="block text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">Credited Amount (₹)</label>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-black text-primary">₹</span>
                   <input
@@ -96,14 +96,14 @@ export const SalaryModal = ({ isOpen, onClose }) => {
 
               {/* Itemized commitments breakdown based on Financial Rules */}
               <div className="space-y-2">
-                <h3 className="text-[10px] font-bold text-outline uppercase tracking-widest pl-1">Planned Commitments</h3>
+                <h3 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pl-1">Planned Commitments</h3>
                 
                 <div className="bg-surface-container-lowest border-[0.5px] border-outline-variant/20 rounded-xl divide-y divide-outline-variant/10">
                   
                   {/* Rent */}
                   <div className="p-3 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-md bg-[#5856D6]/10 flex items-center justify-center text-[#5856D6]">
+                      <div className="w-6 h-6 rounded-md bg-[#2b2ae8]/10 flex items-center justify-center text-[#2b2ae8]">
                         <span className="material-symbols-outlined text-[16px]">home</span>
                       </div>
                       <span className="font-semibold text-on-surface-variant">House Rent</span>
@@ -116,7 +116,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
                   {/* EMI */}
                   <div className="p-3 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-md bg-[#FFB038]/10 flex items-center justify-center text-[#FFB038]">
+                      <div className="w-6 h-6 rounded-md bg-[#e6ae41]/10 flex items-center justify-center text-[#e6ae41]">
                         <span className="material-symbols-outlined text-[16px]">receipt_long</span>
                       </div>
                       <span className="font-semibold text-on-surface-variant">EMI Commitments</span>
@@ -129,7 +129,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
                   {/* SIP */}
                   <div className="p-3 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-md bg-[#34C759]/10 flex items-center justify-center text-[#34C759]">
+                      <div className="w-6 h-6 rounded-md bg-[#006c4f]/10 flex items-center justify-center text-[#006c4f]">
                         <span className="material-symbols-outlined text-[16px]">eco</span>
                       </div>
                       <span className="font-semibold text-on-surface-variant">SIP Investments</span>
@@ -142,7 +142,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
                   {/* Travel */}
                   <div className="p-3 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-md bg-[#FF2D55]/10 flex items-center justify-center text-[#FF2D55]">
+                      <div className="w-6 h-6 rounded-md bg-[#ba1a1a]/10 flex items-center justify-center text-[#ba1a1a]">
                         <span className="material-symbols-outlined text-[16px]">directions_car</span>
                       </div>
                       <span className="font-semibold text-on-surface-variant">Travel Budget</span>
@@ -155,7 +155,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
                   {/* Bills */}
                   <div className="p-3 flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-6 h-6 rounded-md bg-[#8E8E93]/10 flex items-center justify-center text-[#8E8E93]">
+                      <div className="w-6 h-6 rounded-md bg-[#6b7b72]/10 flex items-center justify-center text-[#6b7b72]">
                         <span className="material-symbols-outlined text-[16px]">lightbulb</span>
                       </div>
                       <span className="font-semibold text-on-surface-variant">Bills & Utilities</span>
@@ -169,7 +169,7 @@ export const SalaryModal = ({ isOpen, onClose }) => {
               </div>
 
               {/* Surplus result box */}
-              <div className="bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl p-4 text-white flex items-center justify-between shadow-md">
+              <div className="bg-gradient-to-r from-primary to-[#00543d] rounded-xl p-4 text-white flex items-center justify-between shadow-md">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">Recalculated Surplus</span>
                   <span className="block text-xl font-black mt-0.5">{formatCurrency(surplus)}</span>

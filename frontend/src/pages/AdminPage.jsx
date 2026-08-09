@@ -54,7 +54,7 @@ export const AdminPage = () => {
       <header className="bg-inverse-surface docked full-width top-0 rounded-b-none z-50 sticky">
         <div className="flex justify-between items-center w-full px-5 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+            <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
               <span className="material-symbols-outlined text-[16px]">shield_person</span>
             </div>
             <h1 className="text-lg font-bold text-on-primary text-left">Admin Panel</h1>

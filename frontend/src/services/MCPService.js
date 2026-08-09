@@ -33,10 +33,10 @@ class MCPService {
         holdings: investments.map((inv) => ({
           name: inv.name,
           type: inv.type,
-          invested: inv.invested,
-          currentValue: inv.currentValue || inv.invested,
+          invested: inv.investedAmount,
+          currentValue: inv.currentValue || inv.investedAmount,
         })),
-        totalInvested: investments.reduce((sum, inv) => sum + inv.invested, 0),
+        totalInvested: investments.reduce((sum, inv) => sum + inv.investedAmount, 0),
       };
 
       const response = await fetch(`${this.mcpEndpoint}/grow/analyze`, {
@@ -63,8 +63,8 @@ class MCPService {
    * Mock Grow insights (used when MCP not connected)
    */
   getMockGrowInsight(investments) {
-    const totalInvested = investments.reduce((sum, inv) => sum + inv.invested, 0);
-    const totalValue = investments.reduce((sum, inv) => sum + (inv.currentValue || inv.invested), 0);
+    const totalInvested = investments.reduce((sum, inv) => sum + inv.investedAmount, 0);
+    const totalValue = investments.reduce((sum, inv) => sum + (inv.currentValue || inv.investedAmount), 0);
     const gains = totalValue - totalInvested;
     const gainPercentage = totalInvested > 0 ? ((gains / totalInvested) * 100).toFixed(1) : 0;
 
@@ -76,8 +76,8 @@ class MCPService {
     });
 
     const typePerformance = Object.entries(byType).map(([type, items]) => {
-      const typeInvested = items.reduce((sum, inv) => sum + inv.invested, 0);
-      const typeValue = items.reduce((sum, inv) => sum + (inv.currentValue || inv.invested), 0);
+      const typeInvested = items.reduce((sum, inv) => sum + inv.investedAmount, 0);
+      const typeValue = items.reduce((sum, inv) => sum + (inv.currentValue || inv.investedAmount), 0);
       const typeGain = ((typeValue - typeInvested) / typeInvested) * 100;
       return { type, gain: typeGain };
     });

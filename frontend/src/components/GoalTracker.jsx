@@ -199,9 +199,9 @@ export const GoalTracker = () => {
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                    g.category === 'Safety' ? 'bg-[#FF3B30]/10 text-[#FF3B30]' :
-                    g.category === 'Leisure' ? 'bg-[#5856D6]/10 text-[#5856D6]' :
-                    g.category === 'Gadgets' ? 'bg-[#FFB038]/10 text-[#FFB038]' :
+                    g.category === 'Safety' ? 'bg-[#ba1a1a]/10 text-[#ba1a1a]' :
+                    g.category === 'Leisure' ? 'bg-[#2b2ae8]/10 text-[#2b2ae8]' :
+                    g.category === 'Gadgets' ? 'bg-[#e6ae41]/10 text-[#e6ae41]' :
                     'bg-primary/10 text-primary'
                   }`}>
                     <span className="material-symbols-outlined text-lg">

@@ -168,23 +168,23 @@ export const ExpensesPage = () => {
   const totalMonthlyLedger = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   const allocationChartData = [
-    { name: 'EMI', value: emi, color: '#FF3B30' },
-    { name: 'Rent', value: rent, color: '#5856D6' },
-    { name: 'SIP', value: sip, color: '#34C759' },
-    { name: 'Travel', value: travel, color: '#007AFF' },
-    { name: 'Bills', value: bills, color: '#8E8E93' },
-    { name: 'Surplus', value: Math.max(0, youKeep), color: '#34C759' }
+    { name: 'EMI', value: emi, color: '#ba1a1a' },
+    { name: 'Rent', value: rent, color: '#2b2ae8' },
+    { name: 'SIP', value: sip, color: '#006c4f' },
+    { name: 'Travel', value: travel, color: '#2b2ae8' },
+    { name: 'Bills', value: bills, color: '#6b7b72' },
+    { name: 'Surplus', value: Math.max(0, youKeep), color: '#006c4f' }
   ].filter(item => item.value > 0);
 
   const categoryColors = {
-    Food: '#FF9500',
-    Travel: '#007AFF',
-    Shopping: '#FF2D55',
-    Entertainment: '#5856D6',
-    Bills: '#FFCC00',
-    Health: '#34C759',
-    Education: '#5AC8FA',
-    Other: '#8E8E93'
+    Food: '#e6ae41',
+    Travel: '#2b2ae8',
+    Shopping: '#ba1a1a',
+    Entertainment: '#2b2ae8',
+    Bills: '#e6ae41',
+    Health: '#006c4f',
+    Education: '#2b2ae8',
+    Other: '#6b7b72'
   };
 
   const categoryTotals = monthlyExpenses.reduce((acc, curr) => {
@@ -329,7 +329,7 @@ export const ExpensesPage = () => {
                     />
                   </PieChart>
                   <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
-                    <span className="text-[8px] font-semibold text-outline uppercase tracking-wider">Salary</span>
+                    <span className="text-[8px] font-semibold text-on-surface-variant uppercase tracking-wider">Salary</span>
                     <span className="text-[11px] font-black text-on-surface">₹{(salaryAmount / 1000).toFixed(0)}k</span>
                   </div>
                 </div>
@@ -338,11 +338,11 @@ export const ExpensesPage = () => {
               {/* Breakdown Rows with Mark as Paid and Inline Edit */}
               <div className="w-full space-y-4">
                 {[
-                  { label: 'EMI Commitments', key: 'emi', value: emi, color: 'bg-[#FF3B30]' },
-                  { label: 'House Rent', key: 'rent', value: rent, color: 'bg-[#5856D6]' },
-                  { label: 'SIP Investments', key: 'sip', value: sip, color: 'bg-[#34C759]' },
-                  { label: 'Travel Budget', key: 'travel', value: travel, color: 'bg-[#FF2D55]' },
-                  { label: 'Bills & Utilities', key: 'bills', value: bills, color: 'bg-[#8E8E93]' }
+                  { label: 'EMI Commitments', key: 'emi', value: emi, color: 'bg-[#ba1a1a]' },
+                  { label: 'House Rent', key: 'rent', value: rent, color: 'bg-[#2b2ae8]' },
+                  { label: 'SIP Investments', key: 'sip', value: sip, color: 'bg-[#006c4f]' },
+                  { label: 'Travel Budget', key: 'travel', value: travel, color: 'bg-[#ba1a1a]' },
+                  { label: 'Bills & Utilities', key: 'bills', value: bills, color: 'bg-[#6b7b72]' }
                 ].map(({ label, key, value, color }) => {
                   const isPaid = paidList.includes(key);
                   const isConfigured = isCategoryConfigured(key);
@@ -376,7 +376,7 @@ export const ExpensesPage = () => {
                             Not set · <button onClick={() => handleSetUpRedirect(key === 'rent' ? 'salary' : key === 'bills' ? 'budget' : key)} className="text-primary font-bold hover:underline">Set up →</button>
                           </span>
                         ) : isPaid ? (
-                          <span className="text-xs font-bold text-[#34C759] bg-[#34C759]/10 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                          <span className="text-xs font-bold text-[#006c4f] bg-[#006c4f]/10 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                             Paid ✓
                           </span>
                         ) : isEditing ? (
@@ -389,7 +389,7 @@ export const ExpensesPage = () => {
                             />
                             <button 
                               onClick={handleSaveEdit}
-                              className="p-1 rounded bg-[#34C759] text-white hover:opacity-90 flex items-center justify-center shrink-0"
+                              className="p-1 rounded bg-[#006c4f] text-white hover:opacity-90 flex items-center justify-center shrink-0"
                             >
                               <span className="material-symbols-outlined text-xs">check</span>
                             </button>
@@ -436,7 +436,7 @@ export const ExpensesPage = () => {
           {/* AI Recommendation Insight Chip */}
           <div className="mt-6 bg-primary-fixed/30 rounded-xl p-4 border border-primary-fixed/50 flex gap-4 text-left">
             <div className="mt-1">
-              <span className="material-symbols-outlined text-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
             </div>
             <div className="flex-1">
               <p className="text-xs text-on-background leading-relaxed">
@@ -481,9 +481,9 @@ export const ExpensesPage = () => {
                           color: '#fff',
                         }}
                       />
-                      <Bar dataKey="amount" fill="#1A56F5" radius={[4, 4, 0, 0]}>
+                      <Bar dataKey="amount" fill="#006c4f" radius={[4, 4, 0, 0]}>
                         {barChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={categoryColors[entry.name] || '#1A56F5'} />
+                          <Cell key={`cell-${index}`} fill={categoryColors[entry.name] || '#006c4f'} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -665,11 +665,11 @@ export const ExpensesPage = () => {
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[10px] font-bold">
                     <span className="text-on-surface-variant/60 uppercase tracking-wider">Commitments Progress</span>
-                    <span className={progressPercent === 100 ? "text-[#34C759]" : "text-primary"}>{paidCount} / 5 Marked Paid</span>
+                    <span className={progressPercent === 100 ? "text-[#006c4f]" : "text-primary"}>{paidCount} / 5 Marked Paid</span>
                   </div>
                   <div className="w-full bg-outline-variant/20 h-1.5 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-300 ${progressPercent === 100 ? 'bg-[#34C759]' : 'bg-primary'}`} 
+                      className={`h-full rounded-full transition-all duration-300 ${progressPercent === 100 ? 'bg-[#006c4f]' : 'bg-primary'}`} 
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>

@@ -538,7 +538,7 @@ export const ProfilePage = () => {
       <header className="bg-inverse-surface docked full-width top-0 rounded-b-none z-50 sticky">
         <div className="flex justify-between items-center w-full px-5 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary font-bold text-[10px] overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-[10px] overflow-hidden">
               {userName.substring(0, 2).toUpperCase()}
             </div>
             <h1 className="text-lg font-bold text-on-primary text-left">Settings</h1>
@@ -885,7 +885,7 @@ export const ProfilePage = () => {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">New 4-Digit PIN</label>
+                  <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">New 4-Digit PIN</label>
                   <input
                     type="password"
                     pattern="[0-9]*"
@@ -903,7 +903,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">Confirm New PIN</label>
+                  <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Confirm New PIN</label>
                   <input
                     type="password"
                     pattern="[0-9]*"
@@ -1176,7 +1176,7 @@ export const ProfilePage = () => {
 
               <form onSubmit={handleSaveSalaryRules} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Salary (₹)</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly Salary (₹)</label>
                   <div className="relative">
                     <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
                     <input
@@ -1191,7 +1191,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly House Rent (₹)</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly House Rent (₹)</label>
                   <div className="relative">
                     <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
                     <input
@@ -1205,7 +1205,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Salary Credit Day</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Salary Credit Day</label>
                   <select
                     value={salDay}
                     onChange={(e) => setSalDay(e.target.value)}
@@ -1221,7 +1221,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Bank Account</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Bank Account</label>
                   <input
                     type="text"
                     value={salBank}
@@ -1288,7 +1288,7 @@ export const ProfilePage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">EMI Label</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">EMI Label</label>
                     <input
                       type="text"
                       value={emiLabel}
@@ -1300,7 +1300,7 @@ export const ProfilePage = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Bank / Lender</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Bank / Lender</label>
                     <input
                       type="text"
                       value={emiLender}
@@ -1313,7 +1313,7 @@ export const ProfilePage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
                     <input
                       type="number"
                       value={emiAmount}
@@ -1325,7 +1325,7 @@ export const ProfilePage = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Due Date</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Due Date</label>
                     <select
                       value={emiDueDate}
                       onChange={(e) => setEmiDueDate(e.target.value)}
@@ -1340,7 +1340,7 @@ export const ProfilePage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">End Month/Year</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">End Month/Year</label>
                     <input
                       type="month"
                       value={emiEndMonth}
@@ -1351,7 +1351,7 @@ export const ProfilePage = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Loan Type</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Loan Type</label>
                     <select
                       value={emiType}
                       onChange={(e) => setEmiType(e.target.value)}
@@ -1462,7 +1462,7 @@ export const ProfilePage = () => {
                 <h3 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Create New SIP</h3>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Fund Name</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Fund Name</label>
                   <input
                     type="text"
                     value={sipFundName}
@@ -1475,7 +1475,7 @@ export const ProfilePage = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly Amount (₹)</label>
                     <input
                       type="number"
                       value={sipAmount}
@@ -1487,7 +1487,7 @@ export const ProfilePage = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Deduction Date</label>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Deduction Date</label>
                     <select
                       value={sipDate}
                       onChange={(e) => setSipDate(e.target.value)}
@@ -1589,7 +1589,7 @@ export const ProfilePage = () => {
 
               <form onSubmit={handleSaveBudget} className="space-y-4 bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/25 shadow-sm">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Travel Budget (₹)</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly Travel Budget (₹)</label>
                   <div className="relative">
                     <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
                     <input
@@ -1604,7 +1604,7 @@ export const ProfilePage = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-outline uppercase tracking-wider pl-1">Monthly Bills &amp; Utilities Estimate (₹)</label>
+                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider pl-1">Monthly Bills &amp; Utilities Estimate (₹)</label>
                   <div className="relative">
                     <span className="absolute left-4 top-3 font-semibold text-on-surface-variant text-sm">₹</span>
                     <input

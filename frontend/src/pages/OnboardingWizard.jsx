@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import { formatCurrency } from '../utils/helpers';
+import { ShaderBackground } from '../components/ShaderBackground';
 
 export const OnboardingWizard = () => {
   const store = useFinanceStore();
@@ -91,13 +92,16 @@ export const OnboardingWizard = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[150] bg-[#0d1326] text-white flex flex-col justify-between items-stretch px-5 pt-12 pb-10 overflow-y-auto selection:bg-transparent">
-      {/* Decorative Atmospheric Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[250px] h-[250px] bg-tertiary/10 rounded-full blur-[80px] pointer-events-none"></div>
+    <div className="fixed inset-0 z-[150] bg-background text-on-surface flex flex-col justify-between items-stretch px-5 pt-12 pb-10 overflow-y-auto selection:bg-transparent">
+      {/* Ambient shader + colored blooms, matching the login screen */}
+      <div className="absolute inset-0 opacity-70 pointer-events-none z-0">
+        <ShaderBackground />
+      </div>
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-primary/15 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[250px] h-[250px] bg-tertiary-container/15 rounded-full blur-[80px] pointer-events-none"></div>
 
       {/* Top Banner (Logo/Step Indicator) */}
-      <div className="flex justify-between items-center z-10 shrink-0">
+      <div className="relative flex justify-between items-center z-10 shrink-0">
         <h1 className="text-sm font-black tracking-widest text-primary font-headline">FRIDAY</h1>
         <div className="flex gap-1.5">
           {['pin', 'salary', 'commitments', 'investments', 'summary'].map((s, idx) => {
@@ -109,7 +113,7 @@ export const OnboardingWizard = () => {
               <div 
                 key={s} 
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  isActive ? 'w-5 bg-primary' : isCompleted ? 'w-2 bg-tertiary' : 'w-2 bg-white/10'
+                  isActive ? 'w-5 bg-primary' : isCompleted ? 'w-2 bg-tertiary' : 'w-2 bg-surface-container-high'
                 }`}
               />
             );
@@ -118,7 +122,7 @@ export const OnboardingWizard = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-grow flex flex-col justify-center items-center py-6 z-10 w-full max-w-sm mx-auto text-center">
+      <div className="relative flex-grow flex flex-col justify-center items-center py-6 z-10 w-full max-w-sm mx-auto text-center">
         <AnimatePresence mode="wait">
           
           {/* STEP 1: PIN Setup */}
@@ -132,14 +136,14 @@ export const OnboardingWizard = () => {
             >
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold font-headline">Personal Security</h2>
-                <p className="text-xs text-white/50 leading-relaxed px-4">Set a 4-digit security PIN to quickly and securely login to your account next time.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed px-4">Set a 4-digit security PIN to quickly and securely login to your account next time.</p>
               </div>
 
               {pinError && (
                 <p className="text-[11px] text-error font-semibold uppercase tracking-wider px-4 text-center">{pinError}</p>
               )}
               {isSavingPin && !pinError && (
-                <p className="text-[10px] text-white/40 uppercase tracking-wider">Saving PIN…</p>
+                <p className="text-[10px] text-on-surface-variant/70 uppercase tracking-wider">Saving PIN…</p>
               )}
 
               {/* Dot Indicators */}
@@ -150,7 +154,7 @@ export const OnboardingWizard = () => {
                     className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
                       pin.length > idx
                         ? 'bg-primary border-primary scale-110 shadow-[0_0_10px_rgba(26,86,245,0.4)]'
-                        : 'border-white/20 bg-transparent'
+                        : 'border-outline-variant/50 bg-transparent'
                     }`}
                   />
                 ))}
@@ -163,7 +167,7 @@ export const OnboardingWizard = () => {
                     key={num}
                     onClick={() => handlePinKeyPress(num.toString())}
                     disabled={isSavingPin}
-                    className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                    className="w-14 h-14 rounded-full border border-outline-variant/20 bg-surface-container-low active:bg-primary/20 hover:border-outline-variant/30 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                   >
                     {num}
                   </button>
@@ -172,14 +176,14 @@ export const OnboardingWizard = () => {
                 <button
                   onClick={() => handlePinKeyPress('0')}
                   disabled={isSavingPin}
-                  className="w-14 h-14 rounded-full border border-white/5 bg-white/5 active:bg-primary/20 hover:border-white/10 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                  className="w-14 h-14 rounded-full border border-outline-variant/20 bg-surface-container-low active:bg-primary/20 hover:border-outline-variant/30 flex items-center justify-center font-semibold text-lg hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                 >
                   0
                 </button>
                 <button
                   onClick={handlePinBackspace}
                   disabled={isSavingPin}
-                  className="w-14 h-14 rounded-full flex items-center justify-center text-white/50 active:text-white transition-colors disabled:opacity-50"
+                  className="w-14 h-14 rounded-full flex items-center justify-center text-on-surface-variant active:text-on-surface transition-colors disabled:opacity-50"
                 >
                   <span className="material-symbols-outlined text-lg">backspace</span>
                 </button>
@@ -198,11 +202,11 @@ export const OnboardingWizard = () => {
             >
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-bold font-headline">Welcome, {userName}!</h2>
-                <p className="text-xs text-white/50 leading-relaxed px-4">Let's configure your financial profile. What is your monthly credited salary?</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed px-4">Let's configure your financial profile. What is your monthly credited salary?</p>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 w-full flex flex-col gap-2 shadow-inner backdrop-blur-sm">
-                <label className="text-[10px] font-semibold text-white/40 uppercase tracking-widest ml-1">Credited Income</label>
+              <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-5 w-full flex flex-col gap-2 shadow-inner backdrop-blur-sm">
+                <label className="text-[10px] font-semibold text-on-surface-variant/70 uppercase tracking-widest ml-1">Credited Income</label>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-primary">₹</span>
                   <input
@@ -210,7 +214,7 @@ export const OnboardingWizard = () => {
                     value={salary}
                     onChange={(e) => setSalary(e.target.value)}
                     placeholder="85000"
-                    className="w-full bg-transparent border-none text-2xl font-bold text-white focus:ring-0 focus:outline-none p-0"
+                    className="w-full bg-transparent border-none text-2xl font-bold text-on-surface focus:ring-0 focus:outline-none p-0"
                     autoFocus
                   />
                 </div>
@@ -236,16 +240,16 @@ export const OnboardingWizard = () => {
             >
               <div>
                 <h2 className="text-2xl font-bold font-headline">Fixed Commitments</h2>
-                <p className="text-xs text-white/50 leading-relaxed mt-1">Configure your monthly outgoing bills, rent, and active loan EMIs.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed mt-1">Configure your monthly outgoing bills, rent, and active loan EMIs.</p>
               </div>
 
               {/* Sliders Container */}
               <div className="space-y-4">
                 {/* EMI */}
-                <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-[#FFB038]">Loan EMIs</span>
-                    <span className="text-xs font-bold text-white">{formatCurrency(emi)}</span>
+                    <span className="text-xs font-bold text-on-surface">{formatCurrency(emi)}</span>
                   </div>
                   <input
                     type="range"
@@ -254,15 +258,15 @@ export const OnboardingWizard = () => {
                     step="500"
                     value={emi}
                     onChange={(e) => setEmi(parseInt(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                 </div>
 
                 {/* Rent */}
-                <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-[#5856D6]">House Rent</span>
-                    <span className="text-xs font-bold text-white">{formatCurrency(rent)}</span>
+                    <span className="text-xs font-bold text-on-surface">{formatCurrency(rent)}</span>
                   </div>
                   <input
                     type="range"
@@ -271,15 +275,15 @@ export const OnboardingWizard = () => {
                     step="500"
                     value={rent}
                     onChange={(e) => setRent(parseInt(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                 </div>
 
                 {/* Bills */}
-                <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-white/70">Bills & Utilities</span>
-                    <span className="text-xs font-bold text-white">{formatCurrency(bills)}</span>
+                    <span className="text-xs font-bold text-on-surface-variant">Bills & Utilities</span>
+                    <span className="text-xs font-bold text-on-surface">{formatCurrency(bills)}</span>
                   </div>
                   <input
                     type="range"
@@ -288,20 +292,20 @@ export const OnboardingWizard = () => {
                     step="500"
                     value={bills}
                     onChange={(e) => setBills(parseInt(e.target.value))}
-                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                    className="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-between items-center py-2 px-1 text-xs text-white/50 font-semibold border-t border-white/10 mt-2">
+              <div className="flex justify-between items-center py-2 px-1 text-xs text-on-surface-variant font-semibold border-t border-outline-variant/30 mt-2">
                 <span>Total Outgoings:</span>
-                <span className="text-white font-bold">{formatCurrency(emi + rent + bills)}</span>
+                <span className="text-on-surface font-bold">{formatCurrency(emi + rent + bills)}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={() => setStep('salary')}
-                  className="py-3.5 text-xs font-bold text-white/60 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 active:scale-[0.98] transition-all text-center"
+                  className="py-3.5 text-xs font-bold text-on-surface-variant bg-surface-container-low border border-outline-variant/30 rounded-xl hover:bg-surface-container-high active:scale-[0.98] transition-all text-center"
                 >
                   Back
                 </button>
@@ -326,13 +330,13 @@ export const OnboardingWizard = () => {
             >
               <div>
                 <h2 className="text-2xl font-bold font-headline">Future Savings</h2>
-                <p className="text-xs text-white/50 leading-relaxed mt-1">Set your target monthly SIP investment to build compounding wealth.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed mt-1">Set your target monthly SIP investment to build compounding wealth.</p>
               </div>
 
-              <div className="bg-white/5 border border-white/5 rounded-xl p-4 space-y-4">
+              <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-bold text-[#34C759]">Target Monthly SIP</span>
-                  <span className="text-xs font-bold text-white">{formatCurrency(sip)}</span>
+                  <span className="text-xs font-bold text-on-surface">{formatCurrency(sip)}</span>
                 </div>
                 <input
                   type="range"
@@ -341,11 +345,11 @@ export const OnboardingWizard = () => {
                   step="500"
                   value={sip}
                   onChange={(e) => setSip(parseInt(e.target.value))}
-                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="w-full h-1 bg-surface-container-high rounded-lg appearance-none cursor-pointer accent-primary"
                 />
               </div>
 
-              <div className="bg-[#34C759]/5 border border-[#34C759]/15 rounded-xl p-3.5 flex gap-3 text-xs leading-relaxed text-white/80">
+              <div className="bg-[#34C759]/5 border border-[#34C759]/15 rounded-xl p-3.5 flex gap-3 text-xs leading-relaxed text-on-surface/90">
                 <span className="material-symbols-outlined text-[#34C759] text-base shrink-0">energy_savings_leaf</span>
                 <p>Investing ₹{sip.toLocaleString('en-IN')} monthly at a conservative 12% annual interest grows to <span className="font-bold text-[#34C759]">{formatLakhs(sipFiveYearValue)}</span> in 5 years!</p>
               </div>
@@ -353,7 +357,7 @@ export const OnboardingWizard = () => {
               <div className="grid grid-cols-2 gap-3 pt-4">
                 <button
                   onClick={() => setStep('commitments')}
-                  className="py-3.5 text-xs font-bold text-white/60 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 active:scale-[0.98] transition-all text-center"
+                  className="py-3.5 text-xs font-bold text-on-surface-variant bg-surface-container-low border border-outline-variant/30 rounded-xl hover:bg-surface-container-high active:scale-[0.98] transition-all text-center"
                 >
                   Back
                 </button>
@@ -378,16 +382,16 @@ export const OnboardingWizard = () => {
             >
               <div>
                 <h2 className="text-2xl font-bold font-headline">Calibration Summary</h2>
-                <p className="text-xs text-white/50 leading-relaxed mt-1">Review your financial structure before activating your protocol.</p>
+                <p className="text-xs text-on-surface-variant leading-relaxed mt-1">Review your financial structure before activating your protocol.</p>
               </div>
 
               {/* Summary Card */}
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4 backdrop-blur-sm shadow-xl">
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                  <span className="text-xs text-white/60">Credited Salary</span>
+              <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-5 space-y-4 backdrop-blur-sm shadow-xl">
+                <div className="flex justify-between items-center border-b border-outline-variant/20 pb-3">
+                  <span className="text-xs text-on-surface-variant">Credited Salary</span>
                   <span className="text-sm font-black text-primary">{formatCurrency(parsedSalary)}</span>
                 </div>
-                <div className="space-y-2.5 text-xs text-white/80">
+                <div className="space-y-2.5 text-xs text-on-surface/90">
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-error" /> Committed Outgoings</span>
                     <span className="font-semibold">-{formatCurrency(emi + rent + bills)}</span>
@@ -397,9 +401,9 @@ export const OnboardingWizard = () => {
                     <span className="font-semibold">-{formatCurrency(sip)}</span>
                   </div>
                 </div>
-                <div className="border-t border-white/10 pt-3 flex justify-between items-center">
+                <div className="border-t border-outline-variant/30 pt-3 flex justify-between items-center">
                   <div>
-                    <span className="text-[10px] font-semibold text-white/40 uppercase tracking-widest">Left for you</span>
+                    <span className="text-[10px] font-semibold text-on-surface-variant/70 uppercase tracking-widest">Left for you</span>
                     <span className="block text-lg font-black text-[#34C759] mt-0.5">{formatCurrency(remaining)}</span>
                   </div>
                   <span className="material-symbols-outlined text-2xl text-[#34C759]" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
@@ -409,13 +413,13 @@ export const OnboardingWizard = () => {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={() => setStep('investments')}
-                  className="py-3.5 text-xs font-bold text-white/60 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 active:scale-[0.98] transition-all text-center"
+                  className="py-3.5 text-xs font-bold text-on-surface-variant bg-surface-container-low border border-outline-variant/30 rounded-xl hover:bg-surface-container-high active:scale-[0.98] transition-all text-center"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleFinalize}
-                  className="py-3.5 text-xs font-bold text-white bg-gradient-to-r from-primary to-indigo-600 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-center shadow-lg shadow-primary/20"
+                  className="py-3.5 text-xs font-bold text-white bg-gradient-to-r from-primary to-primary-container rounded-xl hover:opacity-90 active:scale-[0.98] transition-all text-center shadow-lg shadow-primary/20"
                 >
                   Finalize Setup
                 </button>
@@ -427,14 +431,14 @@ export const OnboardingWizard = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="text-center z-10 shrink-0 space-y-2">
-        <p className="text-[10px] font-semibold text-white/30 uppercase tracking-widest">
+      <div className="relative text-center z-10 shrink-0 space-y-2">
+        <p className="text-[10px] font-semibold text-on-surface-variant/50 uppercase tracking-widest">
           Protocol Calibration Wizard
         </p>
         <button
           type="button"
           onClick={() => store.logout()}
-          className="text-[10px] text-white/40 hover:text-white/70 font-semibold uppercase tracking-widest hover:underline active:scale-95 transition-all"
+          className="text-[10px] text-on-surface-variant/70 hover:text-on-surface-variant font-semibold uppercase tracking-widest hover:underline active:scale-95 transition-all"
         >
           Not you? Sign out
         </button>

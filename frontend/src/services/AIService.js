@@ -107,10 +107,10 @@ Keep percentages realistic for India: EMI ~18-24%, Rent ~12-18%, SIP ~10-15%, Tr
 
     try {
       const investmentSummary = investments
-        .map((inv) => `${inv.name} (${inv.type}): ₹${inv.invested} → ₹${inv.currentValue || inv.invested}`)
+        .map((inv) => `${inv.name} (${inv.type}): ₹${inv.investedAmount} → ₹${inv.currentValue || inv.investedAmount}`)
         .join('\n');
 
-      const totalInvested = investments.reduce((sum, inv) => sum + inv.invested, 0);
+      const totalInvested = investments.reduce((sum, inv) => sum + inv.investedAmount, 0);
       const gains = currentValue - totalInvested;
       const gainPercentage = totalInvested > 0 ? ((gains / totalInvested) * 100).toFixed(2) : 0;
 

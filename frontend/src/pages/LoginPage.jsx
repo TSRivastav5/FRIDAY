@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFinanceStore } from '../store/financeStore';
 import api from '../services/api';
+import { TiltCard } from '../components/TiltCard';
+import { ShaderBackground } from '../components/ShaderBackground';
+
+// three.js is a heavy dependency — only load it on the screen that actually
+// shows the 3D coin, not in every page's initial bundle.
+const Coin3D = lazy(() => import('../components/Coin3D').then(m => ({ default: m.Coin3D })));
 
 export const LoginPage = () => {
   const store = useFinanceStore();
@@ -136,27 +142,33 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center font-body antialiased pb-20">
-      {/* Glow ambient background element */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center font-body antialiased pb-20 overflow-hidden">
+      {/* Ambient WebGL gradient + colored blooms — Luminous Finance signature background */}
+      <div className="absolute inset-0 opacity-70 pointer-events-none z-0">
+        <ShaderBackground />
+      </div>
+      <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] bg-primary/20 rounded-full blur-[80px] pointer-events-none z-0 mix-blend-multiply"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-primary-container/20 rounded-full blur-[80px] pointer-events-none z-0 mix-blend-multiply"></div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md bg-white border-[0.5px] border-outline-variant/30 rounded-xl p-8 mx-4 shadow-premium relative text-left"
+      <TiltCard
+        maxTilt={4}
+        className="w-full max-w-md mx-4 rounded-[32px] bg-white/60 backdrop-blur-glass shadow-glass ring-1 ring-white/80 z-10"
       >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-8 text-left"
+        >
         {/* Brand Header */}
         <div className="flex flex-col items-center mb-6 text-center">
-          <div className="flex items-center gap-3 justify-center">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-md">
-              <svg width="24" height="24" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-                <path d="M38 8 L24 30 H34 L27 46 L46 24 H35 Z" fill="#FFFFFF" fillRule="evenodd"/>
-              </svg>
-            </div>
-            <h2 className="text-3xl font-black text-on-surface font-headline tracking-[0.2em] uppercase">
-              FRIDAY
-            </h2>
+          <div className="drop-shadow-[0_12px_24px_rgba(0,108,79,0.2)] w-24 h-24 flex items-center justify-center">
+            <Suspense fallback={<div className="w-20 h-20 rounded-full bg-primary-container/40 animate-pulse" />}>
+              <Coin3D size={96} />
+            </Suspense>
           </div>
+          <h2 className="text-3xl font-black text-on-surface font-headline tracking-[0.2em] uppercase -mt-1">
+            FRIDAY
+          </h2>
           <p className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold opacity-70 mt-2">
             {isLogin ? 'Initialize System Access' : 'Register New Protocol'}
           </p>
@@ -212,12 +224,12 @@ export const LoginPage = () => {
                 transition={{ duration: 0.2 }}
                 className="space-y-1"
               >
-                <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">Directive Name</label>
+                <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Directive Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background"
+                  className="w-full px-4 py-3 rounded-xl bg-white/80 backdrop-blur-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] outline-none transition-all duration-300 text-sm focus:bg-white focus:ring-2 focus:ring-primary/40 focus:shadow-[0_0_12px_rgba(0,108,79,0.15)]"
                   placeholder="Rahul Kapoor"
                   required={!isLogin}
                 />
@@ -246,12 +258,12 @@ export const LoginPage = () => {
             </div>
           ) : (
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">Access Email</label>
+              <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Access Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background"
+                className="w-full px-4 py-3 rounded-xl bg-white/80 backdrop-blur-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] outline-none transition-all duration-300 text-sm focus:bg-white focus:ring-2 focus:ring-primary/40 focus:shadow-[0_0_12px_rgba(0,108,79,0.15)]"
                 placeholder="rahul.kapoor@friday.ai"
                 required
               />
@@ -261,7 +273,7 @@ export const LoginPage = () => {
           {/* Form Fields: Password vs PIN keypad */}
           {isLogin && loginMethod === 'pin' ? (
             <div className="flex flex-col items-center pt-2">
-              <label className="text-[10px] font-semibold text-outline uppercase tracking-wider mb-2">
+              <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider mb-2">
                 Enter PocketPin
               </label>
               
@@ -310,12 +322,12 @@ export const LoginPage = () => {
             </div>
           ) : (
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-outline uppercase tracking-wider ml-1">Passcode</label>
+              <label className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Passcode</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-outline-variant/40 focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none transition-all text-sm bg-background font-mono placeholder:font-sans"
+                className="w-full px-4 py-3 rounded-xl bg-white/80 backdrop-blur-md shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] outline-none transition-all duration-300 text-sm focus:bg-white focus:ring-2 focus:ring-primary/40 focus:shadow-[0_0_12px_rgba(0,108,79,0.15)] font-mono placeholder:font-sans"
                 placeholder={isLogin ? "••••••••" : "Min 6 characters"}
                 required
               />
@@ -329,19 +341,22 @@ export const LoginPage = () => {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               disabled={store.isLoading}
-              className={`w-full py-4 mt-6 rounded-xl text-white font-bold tracking-widest uppercase text-xs shadow-md flex justify-center items-center ${
-                store.isLoading 
-                  ? 'bg-outline-variant cursor-not-allowed' 
-                  : 'bg-primary hover:shadow-lg transition-shadow'
+              className={`relative overflow-hidden group w-full py-4 mt-6 rounded-xl text-white font-bold tracking-widest uppercase text-xs shadow-ambient-primary flex justify-center items-center gap-2 ${
+                store.isLoading
+                  ? 'bg-outline-variant cursor-not-allowed'
+                  : 'bg-gradient-to-b from-primary-fixed-dim to-primary hover:shadow-lg transition-shadow'
               }`}
             >
+              {!store.isLoading && (
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:animate-shimmer skew-x-[-20deg]"></span>
+              )}
               {store.isLoading ? (
                 <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               ) : (
-                isLogin ? 'Initiate Login' : 'Create Access'
+                <span className="relative z-10">{isLogin ? 'Initiate Login' : 'Create Access'}</span>
               )}
             </motion.button>
           )}
@@ -365,10 +380,11 @@ export const LoginPage = () => {
         </div>
 
         {/* App Metadata */}
-        <div className="mt-8 text-center text-[10px] font-semibold text-outline uppercase tracking-wider opacity-50">
+        <div className="mt-8 text-center text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider opacity-50">
           FRIDAY Premium v4.3.0
         </div>
-      </motion.div>
+        </motion.div>
+      </TiltCard>
     </div>
   );
 };

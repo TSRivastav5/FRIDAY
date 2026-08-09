@@ -133,10 +133,10 @@ export const InvestmentsPage = () => {
     const gain = inv.currentValue - inv.investedAmount;
     const gPercent = inv.investedAmount > 0 ? (gain / inv.investedAmount) * 100 : 0;
     const colors = [
-      { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'account_balance_wallet' },
-      { bg: 'bg-purple-100', text: 'text-purple-600', icon: 'trending_up' },
-      { bg: 'bg-[#FFB038]/10', text: 'text-[#92600A]', icon: 'pie_chart' },
-      { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: 'payments' }
+      { bg: 'bg-secondary/10', text: 'text-secondary', icon: 'account_balance_wallet' },
+      { bg: 'bg-primary-container/20', text: 'text-primary', icon: 'trending_up' },
+      { bg: 'bg-[#e6ae41]/10', text: 'text-[#7c5800]', icon: 'pie_chart' },
+      { bg: 'bg-tertiary-container/20', text: 'text-tertiary', icon: 'payments' }
     ];
     const style = colors[idx % colors.length];
     return {
@@ -176,11 +176,11 @@ export const InvestmentsPage = () => {
   }, []);
 
   const ASSET_COLORS = {
-    Equity: '#1A56F5',
-    Debt: '#FFB038',
-    Gold: '#FF2D55',
-    Liquid: '#34C759',
-    Other: '#8E8E93'
+    Equity: '#006c4f',
+    Debt: '#2b2ae8',
+    Gold: '#e6ae41',
+    Liquid: '#6b7b72',
+    Other: '#8a97a3'
   };
 
   const getAssetColor = (name) => ASSET_COLORS[name] || ASSET_COLORS.Other;
@@ -317,7 +317,7 @@ export const InvestmentsPage = () => {
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-[10px] font-bold text-on-primary/60 uppercase tracking-wider">{marketFeed.nifty.name}</span>
                     <span className="text-xs font-bold text-on-primary">{marketFeed.nifty.currentPrice.toLocaleString('en-IN')}</span>
-                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.nifty.changePercent >= 0 ? 'text-[#34C759]' : 'text-error'}`}>
+                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.nifty.changePercent >= 0 ? 'text-tertiary-fixed' : 'text-error'}`}>
                       <span className="material-symbols-outlined text-[14px]">{marketFeed.nifty.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
                       {marketFeed.nifty.changePercent.toFixed(2)}%
                     </span>
@@ -327,7 +327,7 @@ export const InvestmentsPage = () => {
                   <div className="flex items-center gap-1.5 shrink-0 border-l border-white/10 pl-4">
                     <span className="text-[10px] font-bold text-on-primary/60 uppercase tracking-wider">{marketFeed.sensex.name}</span>
                     <span className="text-xs font-bold text-on-primary">{marketFeed.sensex.currentPrice.toLocaleString('en-IN')}</span>
-                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.sensex.changePercent >= 0 ? 'text-[#34C759]' : 'text-error'}`}>
+                    <span className={`text-[10px] font-bold flex items-center ${marketFeed.sensex.changePercent >= 0 ? 'text-tertiary-fixed' : 'text-error'}`}>
                       <span className="material-symbols-outlined text-[14px]">{marketFeed.sensex.changePercent >= 0 ? 'arrow_drop_up' : 'arrow_drop_down'}</span>
                       {marketFeed.sensex.changePercent.toFixed(2)}%
                     </span>
@@ -349,7 +349,7 @@ export const InvestmentsPage = () => {
           </div>
 
           <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-semibold tracking-wider text-on-primary-fixed opacity-60">PORTFOLIO TOTAL</p>
+            <p className="text-[11px] font-semibold tracking-wider text-inverse-on-surface opacity-70">PORTFOLIO TOTAL</p>
             <div className="flex items-baseline gap-2">
               <h2 className="text-4xl font-bold text-on-primary">{formatCurrency(totalValue)}</h2>
               <span className="flex items-center text-tertiary-fixed text-sm font-semibold">
@@ -384,7 +384,7 @@ export const InvestmentsPage = () => {
               </div>
               <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <div 
-                  className="h-full rounded-full bg-[#34C759] shadow-[0_0_8px_rgba(52,199,89,0.3)] transition-all duration-500" 
+                  className="h-full rounded-full bg-[#006c4f] shadow-[0_0_8px_rgba(52,199,89,0.3)] transition-all duration-500" 
                   style={{ width: `${goalProgress.percentage}%` }}
                 />
               </div>
@@ -455,7 +455,7 @@ export const InvestmentsPage = () => {
                   </PieChart>
                   {/* Center Text inside Donut */}
                   <div className="absolute inset-0 flex flex-col justify-center items-center pointer-events-none">
-                    <span className="text-[8px] font-semibold text-outline uppercase tracking-wider">Total</span>
+                    <span className="text-[8px] font-semibold text-on-surface-variant uppercase tracking-wider">Total</span>
                     <span className="text-xs font-black text-on-surface">₹{Math.round(totalValue).toLocaleString('en-IN')}</span>
                   </div>
                 </div>
@@ -501,8 +501,8 @@ export const InvestmentsPage = () => {
                     key={`${item.name}-${idx}`}
                     className="min-w-[100px] bg-background border border-outline-variant/35 rounded-xl p-3 flex flex-col items-center justify-center text-center relative overflow-hidden"
                   >
-                    <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
-                    <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider mb-2">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+                    <span className="text-[10px] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded-full uppercase tracking-wider mb-2">
                       Day {item.day}
                     </span>
                     <p className="text-xs font-bold text-on-surface truncate w-full">{item.name.split(' ')[0]}</p>
@@ -604,8 +604,8 @@ export const InvestmentsPage = () => {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">{h.subType}</span>
                             {h.isSipActive && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[8px] font-bold uppercase tracking-wider">
-                                <span className="w-1 h-1 rounded-full bg-emerald-600 animate-pulse"></span>
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[8px] font-bold uppercase tracking-wider">
+                                <span className="w-1 h-1 rounded-full bg-primary animate-pulse"></span>
                                 SIP
                               </span>
                             )}
@@ -623,11 +623,11 @@ export const InvestmentsPage = () => {
                     </div>
                     <div className="flex justify-between items-center pt-3 border-t border-outline-variant/30">
                       <div>
-                        <p className="text-[11px] font-semibold text-outline uppercase tracking-wider">INVESTED</p>
+                        <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">INVESTED</p>
                         <p className="text-xs font-semibold">{formatCurrency(h.amount)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[11px] font-semibold text-outline uppercase tracking-wider">CURRENT</p>
+                        <p className="text-[11px] font-semibold text-on-surface-variant uppercase tracking-wider">CURRENT</p>
                         <p className="text-xs font-semibold">{formatCurrency(h.currentValue)}</p>
                       </div>
                     </div>
@@ -698,7 +698,7 @@ export const InvestmentsPage = () => {
           <div className="max-w-md mx-auto pointer-events-auto">
             <button 
               onClick={() => setShowForm(true)} 
-              className="w-full bg-primary-container text-on-primary font-bold py-4 rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:brightness-110"
+              className="w-full bg-primary-container text-on-primary-container font-bold py-4 rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:brightness-110"
             >
               <span className="material-symbols-outlined">add_circle</span>
               Add Asset
@@ -736,7 +736,7 @@ export const InvestmentsPage = () => {
               {/* Chart Section */}
               <div className="bg-surface-container-lowest p-3 rounded-xl border border-outline-variant/20 mb-4">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold text-outline uppercase tracking-wider">Historical Performance</span>
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Historical Performance</span>
                   <div className="flex gap-1.5 bg-background p-0.5 rounded-lg border border-outline-variant/30">
                     {['1M', '3M', '1Y'].map(range => (
                       <button
@@ -755,12 +755,12 @@ export const InvestmentsPage = () => {
                     <AreaChart data={selectedChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1A56F5" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#1A56F5" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#006c4f" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#006c4f" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#8E8E93' }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 8, fill: '#8E8E93' }} axisLine={false} tickLine={false} domain={['dataMin - 1000', 'dataMax + 1000']} />
+                      <XAxis dataKey="name" tick={{ fontSize: 8, fill: '#6b7b72' }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 8, fill: '#6b7b72' }} axisLine={false} tickLine={false} domain={['dataMin - 1000', 'dataMax + 1000']} />
                       <Tooltip 
                         formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, 'Value']}
                         contentStyle={{ 
@@ -771,7 +771,7 @@ export const InvestmentsPage = () => {
                           color: '#fff',
                         }}
                       />
-                      <Area type="monotone" dataKey="value" stroke="#1A56F5" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                      <Area type="monotone" dataKey="value" stroke="#006c4f" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -781,11 +781,11 @@ export const InvestmentsPage = () => {
               <div className="space-y-3 mb-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-background p-3 rounded-xl border border-outline-variant/20">
-                    <span className="block text-[9px] font-bold text-outline uppercase tracking-wider">Invested Value</span>
+                    <span className="block text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Invested Value</span>
                     <span className="block text-sm font-bold text-on-surface mt-1">{formatCurrency(selectedFund.amount)}</span>
                   </div>
                   <div className="bg-background p-3 rounded-xl border border-outline-variant/20">
-                    <span className="block text-[9px] font-bold text-outline uppercase tracking-wider">Current Value</span>
+                    <span className="block text-[9px] font-bold text-on-surface-variant uppercase tracking-wider">Current Value</span>
                     <span className="block text-sm font-bold text-on-surface mt-1">{formatCurrency(selectedFund.currentValue)}</span>
                   </div>
                 </div>
@@ -860,7 +860,7 @@ export const InvestmentsPage = () => {
 
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-outline uppercase tracking-wider ml-1">Asset Name</label>
+                  <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider ml-1">Asset Name</label>
                   <input
                     type="text"
                     placeholder="e.g. Axis Bluechip Fund"
@@ -873,7 +873,7 @@ export const InvestmentsPage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-outline uppercase tracking-wider ml-1">Category</label>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider ml-1">Category</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
@@ -886,7 +886,7 @@ export const InvestmentsPage = () => {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-outline uppercase tracking-wider ml-1">Investment Type</label>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider ml-1">Investment Type</label>
                     <select
                       value={formData.type}
                       onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value }))}
@@ -902,7 +902,7 @@ export const InvestmentsPage = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-outline uppercase tracking-wider ml-1">Invested Amount</label>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider ml-1">Invested Amount</label>
                     <input
                       type="number"
                       placeholder="₹5,000"
@@ -913,7 +913,7 @@ export const InvestmentsPage = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-outline uppercase tracking-wider ml-1">Start Date</label>
+                    <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider ml-1">Start Date</label>
                     <input
                       type="date"
                       value={formData.startDate}

@@ -6,8 +6,8 @@ export const BottomNav = () => {
 
   const getTabClass = (tabId) => {
     return store.activeTab === tabId
-      ? "flex flex-col items-center justify-center text-on-primary scale-110 transition-transform tap-highlight-none"
-      : "flex flex-col items-center justify-center text-on-secondary-fixed-variant opacity-80 hover:opacity-100 transition-all duration-300";
+      ? "flex flex-col items-center justify-center text-primary-fixed scale-110 transition-transform tap-highlight-none"
+      : "flex flex-col items-center justify-center text-inverse-on-surface opacity-50 hover:opacity-80 transition-all duration-300";
   };
 
   return (

@@ -68,11 +68,11 @@ const StructuredCard = ({ card }) => {
           </div>
           <div className="w-full bg-outline-variant/20 h-2.5 rounded-full overflow-hidden mb-1">
             <div 
-              className="bg-[#34C759] h-full rounded-full transition-all duration-500" 
+              className="bg-[#006c4f] h-full rounded-full transition-all duration-500" 
               style={{ width: `${percent}%` }}
             />
           </div>
-          <div className="text-[10px] font-semibold text-[#34C759] text-right">{percent}% achieved</div>
+          <div className="text-[10px] font-semibold text-[#006c4f] text-right">{percent}% achieved</div>
         </div>
       );
 
@@ -94,7 +94,7 @@ const StructuredCard = ({ card }) => {
                 </div>
                 {item.reason && <p className="text-[10px] text-on-surface-variant/80 mb-2">{item.reason}</p>}
                 {item.action && (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[#34C759] bg-[#34C759]/10 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[#006c4f] bg-[#006c4f]/10 px-2 py-0.5 rounded-full">
                     <span className="material-symbols-outlined text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     {item.action}
                   </span>
@@ -501,7 +501,7 @@ export const AskAiPage = () => {
               onClick={toggleListening}
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                 isListening 
-                  ? 'bg-red-500 text-white animate-pulse' 
+                  ? 'bg-error text-white animate-pulse' 
                   : 'text-on-surface-variant/60 hover:text-on-surface hover:bg-surface-container-low'
               }`}
             >
